@@ -35,7 +35,6 @@ enum AppConstants {
 
 enum UserDefaultsKeys {
     static let appSettings = "appSettings"
-    static let selectedKeyboardID = "selectedKeyboardID"
     static let selectedKeyboardData = "selectedKeyboardData"
     static let savedKeyboards = "savedKeyboards"
     static let hasCompletedSetup = "hasCompletedSetup"

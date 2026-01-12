@@ -1,7 +1,10 @@
 import Foundation
 import ServiceManagement
+import os.log
 
 enum LaunchAtLogin {
+    private static let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "LaunchAtLogin")
+
     static var isEnabled: Bool {
         get {
             SMAppService.mainApp.status == .enabled
@@ -14,7 +17,7 @@ enum LaunchAtLogin {
                     try SMAppService.mainApp.unregister()
                 }
             } catch {
-                print("Failed to \(newValue ? "enable" : "disable") launch at login: \(error)")
+                logger.error("Failed to \(newValue ? "enable" : "disable") launch at login: \(error.localizedDescription)")
             }
         }
     }

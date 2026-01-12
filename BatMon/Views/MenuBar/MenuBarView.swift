@@ -188,31 +188,92 @@ struct ActionsSection: View {
                 MenuButton(title: "Disconnect", icon: "xmark.circle") {
                     bluetoothManager.disconnect()
                 }
-            } else if bluetoothManager.isScanning {
-                HStack(spacing: 6) {
-                    ProgressView()
-                        .scaleEffect(0.6)
-                    Text("Scanning...")
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                .padding(.vertical, 2)
-
-                MenuButton(title: "Stop Scanning", icon: "stop.circle") {
-                    bluetoothManager.stopScanning()
-                }
             } else {
-                MenuButton(title: "Scan for Keyboards", icon: "antenna.radiowaves.left.and.right") {
-                    bluetoothManager.startScanning()
+                // Not connected - show scan controls and available keyboards
+                if bluetoothManager.isScanning {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .scaleEffect(0.6)
+                        Text("Scanning...")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.vertical, 2)
+
+                    MenuButton(title: "Stop Scanning", icon: "stop.circle") {
+                        bluetoothManager.stopScanning()
+                    }
+                } else {
+                    MenuButton(title: "Scan for Keyboards", icon: "antenna.radiowaves.left.and.right") {
+                        bluetoothManager.startScanning()
+                    }
+
+                    if bluetoothManager.selectedKeyboard != nil {
+                        MenuButton(title: "Reconnect", icon: "arrow.triangle.2.circlepath") {
+                            bluetoothManager.reconnect()
+                        }
+                    }
                 }
 
-                if bluetoothManager.selectedKeyboard != nil {
-                    MenuButton(title: "Reconnect", icon: "arrow.triangle.2.circlepath") {
-                        bluetoothManager.reconnect()
+                // Show available keyboards list
+                if !bluetoothManager.availableKeyboards.isEmpty {
+                    Divider()
+                        .padding(.vertical, 4)
+
+                    Text("Available Keyboards")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.bottom, 2)
+
+                    ForEach(bluetoothManager.availableKeyboards) { keyboard in
+                        KeyboardListItem(
+                            keyboard: keyboard,
+                            isSelected: bluetoothManager.selectedKeyboard?.peripheralIdentifier == keyboard.peripheralIdentifier
+                        ) {
+                            bluetoothManager.selectKeyboard(keyboard)
+                        }
                     }
+                } else if !bluetoothManager.isScanning {
+                    // No keyboards found - prompt to scan
+                    Text("No keyboards found")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.vertical, 4)
                 }
             }
         }
+    }
+}
+
+// MARK: - Keyboard List Item
+
+struct KeyboardListItem: View {
+    let keyboard: ZMKKeyboard
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: "keyboard")
+                    .frame(width: 16)
+                    .foregroundColor(isSelected ? .accentColor : .primary)
+
+                Text(keyboard.name)
+                    .foregroundColor(isSelected ? .accentColor : .primary)
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(.caption)
+                        .foregroundColor(.accentColor)
+                }
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .padding(.vertical, 2)
     }
 }
 

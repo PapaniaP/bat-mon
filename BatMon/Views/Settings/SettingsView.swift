@@ -36,15 +36,18 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager
-    @State private var launchAtLogin = LaunchAtLogin.isEnabled
+
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { LaunchAtLogin.isEnabled },
+            set: { LaunchAtLogin.isEnabled = $0 }
+        )
+    }
 
     var body: some View {
         Form {
             Section {
-                Toggle("Launch at Login", isOn: $launchAtLogin)
-                    .onChange(of: launchAtLogin) { newValue in
-                        LaunchAtLogin.isEnabled = newValue
-                    }
+                Toggle("Launch at Login", isOn: launchAtLoginBinding)
                 Toggle("Auto-reconnect to keyboard", isOn: $preferencesManager.settings.autoReconnect)
             }
 
@@ -316,6 +319,54 @@ struct DisplaySettingsView: View {
                     .foregroundColor(.secondary)
             }
             .disabled(preferencesManager.settings.compactMode)
+
+            // Disconnected Icon Customization
+            Section {
+                // Preview
+                HStack {
+                    Spacer()
+                    BatIconView(
+                        fillColor: Color(hex: preferencesManager.settings.disconnectedIconFillHex),
+                        borderColor: preferencesManager.settings.disconnectedIconBorderEnabled
+                            ? Color(hex: preferencesManager.settings.disconnectedIconBorderHex)
+                            : nil
+                    )
+                    .scaleEffect(2.0)
+                    .frame(width: 50, height: 35)
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+                .background(Color.black.opacity(0.8))
+                .cornerRadius(6)
+
+                // Fill color picker
+                ColorPicker(
+                    "Icon Color",
+                    selection: Binding(
+                        get: { Color(hex: preferencesManager.settings.disconnectedIconFillHex) },
+                        set: { preferencesManager.settings.disconnectedIconFillHex = $0.toHex() }
+                    )
+                )
+
+                // Border toggle and color
+                Toggle("Show Border", isOn: $preferencesManager.settings.disconnectedIconBorderEnabled)
+
+                if preferencesManager.settings.disconnectedIconBorderEnabled {
+                    ColorPicker(
+                        "Border Color",
+                        selection: Binding(
+                            get: { Color(hex: preferencesManager.settings.disconnectedIconBorderHex) },
+                            set: { preferencesManager.settings.disconnectedIconBorderHex = $0.toHex() }
+                        )
+                    )
+                }
+            } header: {
+                Text("Disconnected Icon")
+            } footer: {
+                Text("Customize the bat icon shown when no keyboard is connected.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
         .formStyle(.grouped)
         .padding()

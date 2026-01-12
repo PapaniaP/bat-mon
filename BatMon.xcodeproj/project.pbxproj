@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AST001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = RES003 /* Assets.xcassets */; };
 		APP001 /* BatMonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC001 /* BatMonApp.swift */; };
 		APP002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC002 /* AppDelegate.swift */; };
 		CEA4F47CC5A503630407F630 /* SFSymbolPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EBD4ACDF0A895EDD8D0D2E /* SFSymbolPicker.swift */; };
@@ -22,6 +23,7 @@
 		UTL002 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC014 /* LaunchAtLogin.swift */; };
 		VW001 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC012 /* MenuBarView.swift */; };
 		VW002 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC013 /* SettingsView.swift */; };
+		VW003 /* BatIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC015 /* BatIconView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -29,6 +31,7 @@
 		PROD001 /* BatMon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BatMon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		RES001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		RES002 /* BatMon.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BatMon.entitlements; sourceTree = "<group>"; };
+		RES003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		SRC001 /* BatMonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatMonApp.swift; sourceTree = "<group>"; };
 		SRC002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		SRC003 /* ZMKKeyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZMKKeyboard.swift; sourceTree = "<group>"; };
@@ -43,6 +46,7 @@
 		SRC012 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		SRC013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		SRC014 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
+		SRC015 /* BatIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatIconView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +127,7 @@
 			isa = PBXGroup;
 			children = (
 				SRC012 /* MenuBarView.swift */,
+				SRC015 /* BatIconView.swift */,
 			);
 			path = MenuBar;
 			sourceTree = "<group>";
@@ -164,6 +169,7 @@
 			children = (
 				RES001 /* Info.plist */,
 				RES002 /* BatMon.entitlements */,
+				RES003 /* Assets.xcassets */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -242,6 +248,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AST001 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -266,6 +273,7 @@
 				UTL002 /* LaunchAtLogin.swift in Sources */,
 				VW001 /* MenuBarView.swift in Sources */,
 				VW002 /* SettingsView.swift in Sources */,
+				VW003 /* BatIconView.swift in Sources */,
 				CEA4F47CC5A503630407F630 /* SFSymbolPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -102,6 +102,8 @@ class BluetoothManager: NSObject, ObservableObject {
                     peripheralIdentifier: peripheral.identifier
                 )
                 availableKeyboards.append(keyboard)
+            } else {
+                logger.debug("Skipping unnamed device: \(peripheral.identifier)")
             }
         }
 
@@ -456,7 +458,7 @@ extension BluetoothManager: CBPeripheralDelegate {
             return
         }
 
-        let percentage = Int(data[0])
+        let percentage = min(max(Int(data[0]), 0), 100)
         let batteryLevel = BatteryLevel(percentage: percentage, timestamp: Date())
 
         // Identify which half by finding this characteristic in our stored array
@@ -488,16 +490,17 @@ extension BluetoothManager: CBPeripheralDelegate {
         let settings = PreferencesManager.shared.settings
 
         guard settings.enableNotifications else { return }
+        guard let keyboard = selectedKeyboard else { return }
 
         if percentage <= settings.criticalBatteryThreshold {
             NotificationManager.shared.sendCriticalBatteryAlert(
-                keyboard: selectedKeyboard!,
+                keyboard: keyboard,
                 half: half,
                 percentage: percentage
             )
         } else if percentage <= settings.lowBatteryThreshold {
             NotificationManager.shared.sendLowBatteryAlert(
-                keyboard: selectedKeyboard!,
+                keyboard: keyboard,
                 half: half,
                 percentage: percentage
             )

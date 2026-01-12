@@ -51,7 +51,6 @@ class PreferencesManager: ObservableObject {
         do {
             let data = try JSONEncoder().encode(keyboard)
             defaults.set(data, forKey: UserDefaultsKeys.selectedKeyboardData)
-            defaults.set(keyboard.id.uuidString, forKey: UserDefaultsKeys.selectedKeyboardID)
             logger.info("Saved keyboard: \(keyboard.name)")
         } catch {
             logger.error("Failed to save keyboard: \(error.localizedDescription)")
@@ -75,7 +74,6 @@ class PreferencesManager: ObservableObject {
 
     func clearSelectedKeyboard() {
         defaults.removeObject(forKey: UserDefaultsKeys.selectedKeyboardData)
-        defaults.removeObject(forKey: UserDefaultsKeys.selectedKeyboardID)
         logger.info("Cleared selected keyboard")
     }
 

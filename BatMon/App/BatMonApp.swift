@@ -1,4 +1,5 @@
 import SwiftUI
+import AppKit
 
 @main
 struct BatMonApp: App {
@@ -43,13 +44,30 @@ struct MenuBarLabel: View {
                 standardView(keyboard: keyboard)
             }
         } else {
-            HStack(spacing: 4) {
-                if let iconName = settings.menuBarIcon.sfSymbolName {
-                    Image(systemName: iconName)
-                }
-                Text("--")
+            // Disconnected state: show custom bat icon with user colors
+            // MenuBarExtra requires Image, so we render the shape to an image
+            if let nsImage = renderBatIcon() {
+                Image(nsImage: nsImage)
+            } else {
+                Image(systemName: "keyboard.badge.ellipsis")
             }
         }
+    }
+
+    private func renderBatIcon() -> NSImage? {
+        let batView = BatIconView(
+            fillColor: Color(hex: settings.disconnectedIconFillHex),
+            borderColor: settings.disconnectedIconBorderEnabled ? Color(hex: settings.disconnectedIconBorderHex) : nil
+        )
+
+        let renderer = ImageRenderer(content: batView)
+        renderer.scale = 2.0  // Retina
+
+        guard let cgImage = renderer.cgImage else { return nil }
+
+        let nsImage = NSImage(cgImage: cgImage, size: NSSize(width: cgImage.width / 2, height: cgImage.height / 2))
+        nsImage.isTemplate = false  // Keep original colors
+        return nsImage
     }
 
     // MARK: - Standard View

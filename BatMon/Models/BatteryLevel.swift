@@ -3,7 +3,6 @@ import SwiftUI
 struct BatteryLevel: Codable, Equatable {
     let percentage: Int
     let timestamp: Date
-    var isCharging: Bool = false
 
     var color: Color {
         switch percentage {
