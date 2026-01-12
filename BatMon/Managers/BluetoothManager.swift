@@ -22,6 +22,7 @@ class BluetoothManager: NSObject, ObservableObject {
 
     private var scanTimer: Timer?
     private var pollingTimer: Timer?
+    private var cancellables = Set<AnyCancellable>()
 
     private let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "Bluetooth")
 
@@ -45,6 +46,18 @@ class BluetoothManager: NSObject, ObservableObject {
             name: .systemDidWake,
             object: nil
         )
+
+        // Watch for polling interval changes
+        PreferencesManager.shared.$settings
+            .map(\.pollingInterval)
+            .removeDuplicates()
+            .dropFirst() // Skip initial value
+            .sink { [weak self] newInterval in
+                guard let self = self, self.connectionState.isConnected else { return }
+                self.logger.info("Polling interval changed to \(newInterval)s, restarting timer")
+                self.startPolling(interval: newInterval)
+            }
+            .store(in: &cancellables)
 
         // Load saved keyboard on init
         loadSavedKeyboard()

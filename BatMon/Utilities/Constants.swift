@@ -46,5 +46,5 @@ enum AppInfo {
     static let bundleIdentifier = "com.paolo.bat-mon"
     static let version = "1.0.0"
     static let buildNumber = "1"
-    static let githubURL = "https://github.com/paolo/bat-mon"
+    static let githubURL = "https://github.com/PapaniaP/bat-mon"
 }

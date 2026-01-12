@@ -7,23 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		APP001 /* BatMonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC001; };
-		APP002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC002; };
-		MDL001 /* ZMKKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC003; };
-		MDL002 /* BatteryLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC004; };
-		MDL003 /* KeyboardHalf.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC005; };
-		MDL004 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC006; };
-		MDL005 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC007; };
-		MGR001 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC008; };
-		MGR002 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC009; };
-		MGR003 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC010; };
-		UTL001 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC011; };
-		VW001 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC012; };
-		VW002 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC013; };
+		APP001 /* BatMonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC001 /* BatMonApp.swift */; };
+		APP002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC002 /* AppDelegate.swift */; };
+		CEA4F47CC5A503630407F630 /* SFSymbolPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EBD4ACDF0A895EDD8D0D2E /* SFSymbolPicker.swift */; };
+		MDL001 /* ZMKKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC003 /* ZMKKeyboard.swift */; };
+		MDL002 /* BatteryLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC004 /* BatteryLevel.swift */; };
+		MDL003 /* KeyboardHalf.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC005 /* KeyboardHalf.swift */; };
+		MDL004 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC006 /* ConnectionState.swift */; };
+		MDL005 /* AppSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC007 /* AppSettings.swift */; };
+		MGR001 /* BluetoothManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC008 /* BluetoothManager.swift */; };
+		MGR002 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC009 /* PreferencesManager.swift */; };
+		MGR003 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC010 /* NotificationManager.swift */; };
+		UTL001 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC011 /* Constants.swift */; };
+		UTL002 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC014 /* LaunchAtLogin.swift */; };
+		VW001 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC012 /* MenuBarView.swift */; };
+		VW002 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC013 /* SettingsView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		86EBD4ACDF0A895EDD8D0D2E /* SFSymbolPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSymbolPicker.swift; sourceTree = "<group>"; };
 		PROD001 /* BatMon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BatMon.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		RES001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		RES002 /* BatMon.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BatMon.entitlements; sourceTree = "<group>"; };
 		SRC001 /* BatMonApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatMonApp.swift; sourceTree = "<group>"; };
 		SRC002 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		SRC003 /* ZMKKeyboard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ZMKKeyboard.swift; sourceTree = "<group>"; };
@@ -37,8 +42,7 @@
 		SRC011 /* Constants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constants.swift; sourceTree = "<group>"; };
 		SRC012 /* MenuBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarView.swift; sourceTree = "<group>"; };
 		SRC013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
-		RES001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		RES002 /* BatMon.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BatMon.entitlements; sourceTree = "<group>"; };
+		SRC014 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,14 +56,6 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		ROOT /* Root */ = {
-			isa = PBXGroup;
-			children = (
-				GRP001 /* BatMon */,
-				GRP010 /* Products */,
-			);
-			sourceTree = "<group>";
-		};
 		GRP001 /* BatMon */ = {
 			isa = PBXGroup;
 			children = (
@@ -135,6 +131,7 @@
 			isa = PBXGroup;
 			children = (
 				SRC013 /* SettingsView.swift */,
+				86EBD4ACDF0A895EDD8D0D2E /* SFSymbolPicker.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -157,6 +154,7 @@
 			isa = PBXGroup;
 			children = (
 				SRC011 /* Constants.swift */,
+				SRC014 /* LaunchAtLogin.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -176,6 +174,14 @@
 				PROD001 /* BatMon.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		ROOT = {
+			isa = PBXGroup;
+			children = (
+				GRP001 /* BatMon */,
+				GRP010 /* Products */,
+			);
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -257,8 +263,10 @@
 				MGR002 /* PreferencesManager.swift in Sources */,
 				MGR003 /* NotificationManager.swift in Sources */,
 				UTL001 /* Constants.swift in Sources */,
+				UTL002 /* LaunchAtLogin.swift in Sources */,
 				VW001 /* MenuBarView.swift in Sources */,
 				VW002 /* SettingsView.swift in Sources */,
+				CEA4F47CC5A503630407F630 /* SFSymbolPicker.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -318,7 +326,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -375,7 +383,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = macosx;

@@ -28,7 +28,7 @@ struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
-        .frame(width: 450, height: 320)
+        .frame(width: 480, height: 440)
     }
 }
 
@@ -36,11 +36,15 @@ struct SettingsView: View {
 
 struct GeneralSettingsView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager
+    @State private var launchAtLogin = LaunchAtLogin.isEnabled
 
     var body: some View {
         Form {
             Section {
-                Toggle("Launch at Login", isOn: $preferencesManager.settings.launchAtLogin)
+                Toggle("Launch at Login", isOn: $launchAtLogin)
+                    .onChange(of: launchAtLogin) { newValue in
+                        LaunchAtLogin.isEnabled = newValue
+                    }
                 Toggle("Auto-reconnect to keyboard", isOn: $preferencesManager.settings.autoReconnect)
             }
 
@@ -87,15 +91,165 @@ struct GeneralSettingsView: View {
 
 struct DisplaySettingsView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager
+    @State private var showingIconPicker = false
+
+    private var previewText: String? {
+        let settings = preferencesManager.settings
+
+        // Compact mode shows icon only - no text preview
+        if settings.compactMode {
+            return nil
+        }
+
+        if settings.useExperimentalFormat {
+            return settings.experimentalFormat.example
+        }
+
+        let suffix = settings.showPercentSymbol ? "%" : ""
+
+        switch settings.displayFormat {
+        case .percentage:
+            return "85\(suffix)\(settings.separator)90\(suffix)"
+        case .leftOnly:
+            return "85\(suffix)"
+        case .rightOnly:
+            return "90\(suffix)"
+        case .lowest:
+            return "85\(suffix)"
+        }
+    }
+
 
     var body: some View {
         Form {
-            Section("Menu Bar Icon") {
-                Picker("Icon", selection: $preferencesManager.settings.menuBarIcon) {
-                    ForEach(MenuBarIcon.allCases) { icon in
-                        HStack {
-                            if icon != .none {
+            // Live Preview
+            Section {
+                HStack {
+                    Spacer()
+                    HStack(spacing: 6) {
+                        // Show icon based on mode
+                        if preferencesManager.settings.compactMode {
+                            let iconName = preferencesManager.settings.compactIcon == .custom
+                                ? preferencesManager.settings.customCompactIcon
+                                : preferencesManager.settings.compactIcon.sfSymbolName
+                            Image(systemName: iconName)
+                        } else if let iconName = preferencesManager.settings.menuBarIcon.sfSymbolName {
+                            Image(systemName: iconName)
+                        }
+                        if let text = previewText {
+                            Text(text)
+                                .monospacedDigit()
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(6)
+                    Spacer()
+                }
+            } header: {
+                Text("Preview")
+            }
+
+            // Compact Mode Section
+            Section {
+                Toggle("Compact Mode", isOn: $preferencesManager.settings.compactMode)
+
+                if preferencesManager.settings.compactMode {
+                    // Icon picker grid
+                    LazyVGrid(columns: [
+                        GridItem(.adaptive(minimum: 44))
+                    ], spacing: 8) {
+                        // Preset icons (excluding .custom)
+                        ForEach(CompactModeIcon.allCases.filter { $0 != .custom }) { icon in
+                            Button(action: {
+                                preferencesManager.settings.compactIcon = icon
+                            }) {
                                 Image(systemName: icon.sfSymbolName)
+                                    .font(.system(size: 18))
+                                    .frame(width: 40, height: 40)
+                                    .background(
+                                        preferencesManager.settings.compactIcon == icon
+                                            ? Color.accentColor.opacity(0.2)
+                                            : Color.gray.opacity(0.1)
+                                    )
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(
+                                                preferencesManager.settings.compactIcon == icon
+                                                    ? Color.accentColor
+                                                    : Color.clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                            .help(icon.displayName)
+                        }
+
+                        // Custom icon button
+                        Button(action: {
+                            preferencesManager.settings.compactIcon = .custom
+                            showingIconPicker = true
+                        }) {
+                            ZStack {
+                                if preferencesManager.settings.compactIcon == .custom {
+                                    Image(systemName: preferencesManager.settings.customCompactIcon)
+                                        .font(.system(size: 18))
+                                } else {
+                                    Image(systemName: "ellipsis")
+                                        .font(.system(size: 18))
+                                }
+                            }
+                            .frame(width: 40, height: 40)
+                            .background(
+                                preferencesManager.settings.compactIcon == .custom
+                                    ? Color.accentColor.opacity(0.2)
+                                    : Color.gray.opacity(0.1)
+                            )
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(
+                                        preferencesManager.settings.compactIcon == .custom
+                                            ? Color.accentColor
+                                            : Color.clear,
+                                        lineWidth: 2
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .help("Custom icon")
+                    }
+                    .padding(.vertical, 4)
+
+                    // Show "Change" button if custom is selected
+                    if preferencesManager.settings.compactIcon == .custom {
+                        Button("Change Custom Icon...") {
+                            showingIconPicker = true
+                        }
+                        .font(.caption)
+                    }
+                }
+            } header: {
+                Text("Compact Mode")
+            } footer: {
+                Text("Shows only an icon in the menu bar. Battery info appears when you click it.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Icon") {
+                Picker("Menu Bar Icon", selection: $preferencesManager.settings.menuBarIcon) {
+                    ForEach(MenuBarIcon.allCases) { icon in
+                        HStack(spacing: 8) {
+                            if let sfName = icon.sfSymbolName {
+                                Image(systemName: sfName)
+                                    .frame(width: 20)
+                            } else {
+                                Text("—")
+                                    .frame(width: 20)
                             }
                             Text(icon.displayName)
                         }
@@ -104,28 +258,70 @@ struct DisplaySettingsView: View {
                 }
                 .pickerStyle(.radioGroup)
             }
+            .disabled(preferencesManager.settings.compactMode || preferencesManager.settings.useExperimentalFormat)
 
-            Section("Display Format") {
-                Picker("Format", selection: $preferencesManager.settings.displayFormat) {
+            Section("Format") {
+                Picker("Display Format", selection: $preferencesManager.settings.displayFormat) {
                     ForEach(DisplayFormat.allCases) { format in
-                        Text(format.displayName)
-                            .tag(format)
+                        VStack(alignment: .leading) {
+                            Text(format.displayName)
+                        }
+                        .tag(format)
                     }
                 }
                 .pickerStyle(.radioGroup)
+
+                Toggle("Show % symbol", isOn: $preferencesManager.settings.showPercentSymbol)
             }
+            .disabled(preferencesManager.settings.compactMode || preferencesManager.settings.useExperimentalFormat)
 
             Section("Separator") {
-                TextField("Separator", text: $preferencesManager.settings.separator)
-                    .frame(width: 80)
+                Picker("Separator", selection: $preferencesManager.settings.separator) {
+                    ForEach(SeparatorOption.allCases) { option in
+                        Text(option.displayName)
+                            .tag(option.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+            .disabled(preferencesManager.settings.compactMode || preferencesManager.settings.useExperimentalFormat)
 
-                Text("Preview: 85%\(preferencesManager.settings.separator)90%")
+            // Experimental Section
+            Section {
+                Toggle("Enable Experimental Format", isOn: $preferencesManager.settings.useExperimentalFormat)
+
+                if preferencesManager.settings.useExperimentalFormat {
+                    Picker("Style", selection: $preferencesManager.settings.experimentalFormat) {
+                        ForEach(ExperimentalFormat.allCases) { format in
+                            HStack {
+                                Text(format.displayName)
+                                Spacer()
+                                Text(format.example)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                            }
+                            .tag(format)
+                        }
+                    }
+                    .pickerStyle(.radioGroup)
+                }
+            } header: {
+                HStack {
+                    Text("Experimental")
+                    Text("⚗️")
+                }
+            } footer: {
+                Text("Visual styles that may not work perfectly on all systems.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
+            .disabled(preferencesManager.settings.compactMode)
         }
         .formStyle(.grouped)
         .padding()
+        .sheet(isPresented: $showingIconPicker) {
+            SFSymbolPicker(selectedSymbol: $preferencesManager.settings.customCompactIcon)
+        }
     }
 }
 

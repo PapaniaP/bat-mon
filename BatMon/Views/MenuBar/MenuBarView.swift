@@ -19,20 +19,6 @@ struct MenuBarView: View {
             // Actions
             ActionsSection(bluetoothManager: bluetoothManager)
 
-            // Other keyboards (if any discovered)
-            if !bluetoothManager.availableKeyboards.isEmpty {
-                Divider()
-                    .padding(.vertical, 8)
-
-                OtherKeyboardsSection(
-                    keyboards: bluetoothManager.availableKeyboards,
-                    selectedKeyboard: bluetoothManager.selectedKeyboard,
-                    onSelect: { keyboard in
-                        bluetoothManager.selectKeyboard(keyboard)
-                    }
-                )
-            }
-
             Divider()
                 .padding(.vertical, 8)
 
@@ -40,7 +26,7 @@ struct MenuBarView: View {
             AppControlsSection()
         }
         .padding(12)
-        .frame(width: 280)
+        .frame(width: 260)
     }
 }
 
@@ -51,7 +37,7 @@ struct KeyboardStatusSection: View {
     let connectionState: ConnectionState
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 12) {
             // Keyboard name with status indicator
             HStack {
                 Text(keyboard.effectiveName)
@@ -63,23 +49,24 @@ struct KeyboardStatusSection: View {
             }
 
             if connectionState.isConnected {
-                // Battery levels
-                HStack(spacing: 16) {
-                    BatteryDisplay(
+                // Battery levels - two circular gauges side by side
+                HStack(spacing: 20) {
+                    BatteryGauge(
                         label: keyboard.leftHalfLabel,
                         battery: keyboard.leftBattery
                     )
 
-                    BatteryDisplay(
+                    BatteryGauge(
                         label: keyboard.rightHalfLabel,
                         battery: keyboard.rightBattery
                     )
                 }
+                .frame(maxWidth: .infinity)
 
                 // Last updated
                 if let leftTime = keyboard.leftBattery?.timestamp {
                     Text("Updated \(leftTime.timeAgoDisplay())")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundColor(.secondary)
                 }
             } else {
@@ -91,38 +78,47 @@ struct KeyboardStatusSection: View {
     }
 }
 
-// MARK: - Battery Display
+// MARK: - Battery Gauge (Circular)
 
-struct BatteryDisplay: View {
+struct BatteryGauge: View {
     let label: String
     let battery: BatteryLevel?
 
+    private let size: CGFloat = 56
+    private let lineWidth: CGFloat = 5
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
+        VStack(spacing: 4) {
+            ZStack {
+                // Background ring
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: lineWidth)
 
-            HStack(spacing: 6) {
+                // Progress ring
                 if let battery = battery {
-                    Image(systemName: battery.sfSymbolName)
-                        .foregroundColor(battery.color)
+                    Circle()
+                        .trim(from: 0, to: CGFloat(battery.percentage) / 100)
+                        .stroke(
+                            battery.color,
+                            style: StrokeStyle(lineWidth: lineWidth, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
 
-                    Text("\(battery.percentage)%")
-                        .font(.system(.title3, design: .rounded))
-                        .fontWeight(.medium)
+                    Text("\(battery.percentage)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                         .monospacedDigit()
                 } else {
-                    Image(systemName: "battery.0")
-                        .foregroundColor(.gray)
-
                     Text("--")
-                        .font(.system(.title3, design: .rounded))
+                        .font(.system(size: 16, weight: .medium, design: .rounded))
                         .foregroundColor(.secondary)
                 }
             }
+            .frame(width: size, height: size)
+
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.secondary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -183,106 +179,62 @@ struct ActionsSection: View {
     @ObservedObject var bluetoothManager: BluetoothManager
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            // Show Bluetooth state
-            HStack {
-                Circle()
-                    .fill(bluetoothStateColor)
-                    .frame(width: 8, height: 8)
-                Text("Bluetooth: \(bluetoothStateText)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding(.bottom, 4)
-
+        VStack(alignment: .leading, spacing: 6) {
             if bluetoothManager.connectionState.isConnected {
-                Button(action: { bluetoothManager.refreshBatteryLevels() }) {
-                    Label("Refresh Now", systemImage: "arrow.clockwise")
+                MenuButton(title: "Refresh Now", icon: "arrow.clockwise") {
+                    bluetoothManager.refreshBatteryLevels()
                 }
-                .buttonStyle(.plain)
 
-                Button(action: { bluetoothManager.disconnect() }) {
-                    Label("Disconnect", systemImage: "xmark.circle")
+                MenuButton(title: "Disconnect", icon: "xmark.circle") {
+                    bluetoothManager.disconnect()
                 }
-                .buttonStyle(.plain)
             } else if bluetoothManager.isScanning {
-                HStack {
+                HStack(spacing: 6) {
                     ProgressView()
-                        .scaleEffect(0.7)
+                        .scaleEffect(0.6)
                     Text("Scanning...")
-                        .font(.caption)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
                 }
+                .padding(.vertical, 2)
 
-                Button(action: { bluetoothManager.stopScanning() }) {
-                    Label("Stop Scanning", systemImage: "stop.circle")
+                MenuButton(title: "Stop Scanning", icon: "stop.circle") {
+                    bluetoothManager.stopScanning()
                 }
-                .buttonStyle(.plain)
             } else {
-                Button(action: { bluetoothManager.startScanning() }) {
-                    Label("Scan for Keyboards", systemImage: "antenna.radiowaves.left.and.right")
+                MenuButton(title: "Scan for Keyboards", icon: "antenna.radiowaves.left.and.right") {
+                    bluetoothManager.startScanning()
                 }
-                .buttonStyle(.plain)
 
                 if bluetoothManager.selectedKeyboard != nil {
-                    Button(action: { bluetoothManager.reconnect() }) {
-                        Label("Reconnect", systemImage: "arrow.triangle.2.circlepath")
+                    MenuButton(title: "Reconnect", icon: "arrow.triangle.2.circlepath") {
+                        bluetoothManager.reconnect()
                     }
-                    .buttonStyle(.plain)
                 }
             }
-        }
-    }
-
-    private var bluetoothStateColor: Color {
-        switch bluetoothManager.bluetoothState {
-        case .poweredOn: return .green
-        case .poweredOff: return .red
-        case .unauthorized: return .orange
-        default: return .gray
-        }
-    }
-
-    private var bluetoothStateText: String {
-        switch bluetoothManager.bluetoothState {
-        case .poweredOn: return "On"
-        case .poweredOff: return "Off"
-        case .unauthorized: return "Unauthorized"
-        case .unsupported: return "Unsupported"
-        case .resetting: return "Resetting"
-        case .unknown: return "Unknown"
-        @unknown default: return "Unknown"
         }
     }
 }
 
-// MARK: - Other Keyboards Section
+// MARK: - Menu Button
 
-struct OtherKeyboardsSection: View {
-    let keyboards: [ZMKKeyboard]
-    let selectedKeyboard: ZMKKeyboard?
-    let onSelect: (ZMKKeyboard) -> Void
+struct MenuButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Available Keyboards")
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            ForEach(keyboards) { keyboard in
-                Button(action: { onSelect(keyboard) }) {
-                    HStack {
-                        Image(systemName: "keyboard")
-                        Text(keyboard.name)
-                        Spacer()
-                        if keyboard.id == selectedKeyboard?.id {
-                            Image(systemName: "checkmark")
-                                .foregroundColor(.accentColor)
-                        }
-                    }
-                }
-                .buttonStyle(.plain)
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .frame(width: 16)
+                Text(title)
+                Spacer()
             }
+            .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .padding(.vertical, 2)
     }
 }
 
@@ -290,30 +242,41 @@ struct OtherKeyboardsSection: View {
 
 struct AppControlsSection: View {
     var body: some View {
-        VStack(spacing: 4) {
-            Button(action: openSettingsWindow) {
-                Label("Settings...", systemImage: "gear")
-            }
-            .buttonStyle(.plain)
-            .keyboardShortcut(",", modifiers: .command)
+        VStack(alignment: .leading, spacing: 6) {
+            SettingsButton()
 
-            Button(action: { NSApplication.shared.terminate(nil) }) {
-                Label("Quit BatMon", systemImage: "power")
+            MenuButton(title: "Quit BatMon", icon: "power") {
+                NSApplication.shared.terminate(nil)
             }
-            .buttonStyle(.plain)
-            .keyboardShortcut("q", modifiers: .command)
         }
     }
+}
 
-    private func openSettingsWindow() {
-        if #available(macOS 14.0, *) {
-            // Use the newer API on macOS 14+
-            NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-        } else {
-            // Fallback for macOS 13
-            NSApp.sendAction(Selector(("showPreferencesWindow:")), to: nil, from: nil)
+struct SettingsButton: View {
+    @Environment(\.openSettings) private var openSettings
+
+    var body: some View {
+        Button(action: {
+            openSettings()
+            // Bring app to front and focus the settings window
+            DispatchQueue.main.async {
+                NSApp.activate(ignoringOtherApps: true)
+                for window in NSApp.windows where window.title == "Settings" || window.identifier?.rawValue == "settings" {
+                    window.makeKeyAndOrderFront(nil)
+                }
+            }
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "gear")
+                    .frame(width: 16)
+                Text("Settings...")
+                Spacer()
+            }
+            .contentShape(Rectangle())
         }
-        NSApp.activate(ignoringOtherApps: true)
+        .buttonStyle(.plain)
+        .padding(.vertical, 2)
+        .keyboardShortcut(",", modifiers: .command)
     }
 }
 
@@ -327,10 +290,10 @@ extension Date {
             return "just now"
         } else if seconds < 3600 {
             let minutes = seconds / 60
-            return "\(minutes) minute\(minutes == 1 ? "" : "s") ago"
+            return "\(minutes)m ago"
         } else {
             let hours = seconds / 3600
-            return "\(hours) hour\(hours == 1 ? "" : "s") ago"
+            return "\(hours)h ago"
         }
     }
 }
