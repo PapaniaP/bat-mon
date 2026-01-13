@@ -2,7 +2,14 @@ import Foundation
 import SwiftUI
 
 struct AppSettings: Codable, Equatable {
-    // Display settings
+    // Menu dropdown layout and theme (new system)
+    var menuLayout: MenuLayout = .native
+    var colorThemeId: String = "system"
+
+    // Legacy: Keep for migration, will be removed in future version
+    var menuStyle: MenuStyle? = nil
+
+    // Display settings (for menu bar label)
     var menuBarIcon: MenuBarIcon = .none
     var displayFormat: DisplayFormat = .percentage
     var showPercentSymbol: Bool = true
@@ -170,6 +177,75 @@ enum ExperimentalFormat: String, Codable, CaseIterable, Identifiable {
         case .arrows: return "85 › 90"
         case .slashes: return "85/90"
         }
+    }
+}
+
+// MARK: - Legacy MenuStyle (for migration only)
+
+enum MenuStyle: String, Codable, CaseIterable, Identifiable {
+    case native = "native"
+    case rich = "rich"
+    case minimal = "minimal"
+    case retro = "retro"
+    case gruvbox = "gruvbox"
+    case tokyoNight = "tokyoNight"
+
+    var id: String { rawValue }
+
+    var displayName: String {
+        switch self {
+        case .native: return "Native macOS"
+        case .rich: return "Rich & Detailed"
+        case .minimal: return "Minimal"
+        case .retro: return "Retro Terminal"
+        case .gruvbox: return "Gruvbox TUI"
+        case .tokyoNight: return "Tokyo Night TUI"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .native: return "Clean glass design matching system style"
+        case .rich: return "Card-based with horizontal battery bars"
+        case .minimal: return "Ultra-compact, just the essentials"
+        case .retro: return "Monospace terminal aesthetic"
+        case .gruvbox: return "Warm retro TUI with Gruvbox colors"
+        case .tokyoNight: return "Cool modern TUI with Tokyo Night colors"
+        }
+    }
+}
+
+// MARK: - Migration from MenuStyle to Layout + Theme
+
+extension AppSettings {
+    /// Migrates from the old MenuStyle system to the new Layout + Theme system
+    mutating func migrateFromMenuStyleIfNeeded() {
+        guard let oldStyle = menuStyle else { return }
+
+        // Map old style to new layout + theme
+        switch oldStyle {
+        case .native:
+            menuLayout = .native
+            colorThemeId = "system"
+        case .rich:
+            menuLayout = .rich
+            colorThemeId = "system"
+        case .minimal:
+            menuLayout = .minimal
+            colorThemeId = "system"
+        case .retro:
+            menuLayout = .tui
+            colorThemeId = "githubDark"
+        case .gruvbox:
+            menuLayout = .tui
+            colorThemeId = "gruvbox"
+        case .tokyoNight:
+            menuLayout = .tui
+            colorThemeId = "tokyoNight"
+        }
+
+        // Clear the old style to indicate migration is complete
+        menuStyle = nil
     }
 }
 

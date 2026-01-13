@@ -7,10 +7,21 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		AST001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = RES003 /* Assets.xcassets */; };
+		16D65CE9BF6CE1C6183C9C31 /* GruvboxLightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = C38C9CF76BCBBB3DDCB292C9 /* GruvboxLightTheme.swift */; };
+		18CF82FE97032353F434FCD2 /* ThemeRegistry.swift in Sources */ = {isa = PBXBuildFile; fileRef = DAA0CFA15F6D205A48B8C5E8 /* ThemeRegistry.swift */; };
+		1BCF0C77A6063D3D0D2711EE /* GruvboxTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1BD058EEFAE2E332C42602AF /* GruvboxTheme.swift */; };
+		3321B00AF562DE123EFCCF2C /* ThemeEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5FD71F697D73EAF1FB3DA69 /* ThemeEnvironment.swift */; };
+		407F69EF96238C8ED49218F7 /* MenuLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C838BDD9828305D19D76325 /* MenuLayout.swift */; };
+		66BADAEB9481FAEEF527AD1A /* TokyoNightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = DC1E35841C92DA92B17A90DB /* TokyoNightTheme.swift */; };
+		6CBD2729A3B29946687BCF5E /* SolarizedLightTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9E49C0F5387E497265A4E6B /* SolarizedLightTheme.swift */; };
+		A837721845D1A5ACE0F96EC4 /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C4E4F0E1A2543778546A5F /* ColorTheme.swift */; };
 		APP001 /* BatMonApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC001 /* BatMonApp.swift */; };
 		APP002 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC002 /* AppDelegate.swift */; };
+		AST001 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = RES003 /* Assets.xcassets */; };
+		CA02E52BEABB0980CF3BF002 /* ConfigurableTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D251E076DD584111F71226A8 /* ConfigurableTheme.swift */; };
 		CEA4F47CC5A503630407F630 /* SFSymbolPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86EBD4ACDF0A895EDD8D0D2E /* SFSymbolPicker.swift */; };
+		D75A6FFCCD190791D5040A6D /* SystemTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 21616A2441F6116CCC8A8B58 /* SystemTheme.swift */; };
+		EAD77E58AD06A434CC7E725E /* CustomThemeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = B155DB53CE7A6034454DEBEF /* CustomThemeLoader.swift */; };
 		MDL001 /* ZMKKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC003 /* ZMKKeyboard.swift */; };
 		MDL002 /* BatteryLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC004 /* BatteryLevel.swift */; };
 		MDL003 /* KeyboardHalf.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC005 /* KeyboardHalf.swift */; };
@@ -27,7 +38,18 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1BD058EEFAE2E332C42602AF /* GruvboxTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GruvboxTheme.swift; sourceTree = "<group>"; };
+		21616A2441F6116CCC8A8B58 /* SystemTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SystemTheme.swift; sourceTree = "<group>"; };
+		5C838BDD9828305D19D76325 /* MenuLayout.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = MenuLayout.swift; sourceTree = "<group>"; };
+		78C4E4F0E1A2543778546A5F /* ColorTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ColorTheme.swift; sourceTree = "<group>"; };
 		86EBD4ACDF0A895EDD8D0D2E /* SFSymbolPicker.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SFSymbolPicker.swift; sourceTree = "<group>"; };
+		B155DB53CE7A6034454DEBEF /* CustomThemeLoader.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = CustomThemeLoader.swift; sourceTree = "<group>"; };
+		B5FD71F697D73EAF1FB3DA69 /* ThemeEnvironment.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ThemeEnvironment.swift; sourceTree = "<group>"; };
+		C38C9CF76BCBBB3DDCB292C9 /* GruvboxLightTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = GruvboxLightTheme.swift; sourceTree = "<group>"; };
+		D251E076DD584111F71226A8 /* ConfigurableTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ConfigurableTheme.swift; sourceTree = "<group>"; };
+		DAA0CFA15F6D205A48B8C5E8 /* ThemeRegistry.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = ThemeRegistry.swift; sourceTree = "<group>"; };
+		DC1E35841C92DA92B17A90DB /* TokyoNightTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TokyoNightTheme.swift; sourceTree = "<group>"; };
+		E9E49C0F5387E497265A4E6B /* SolarizedLightTheme.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = SolarizedLightTheme.swift; sourceTree = "<group>"; };
 		PROD001 /* BatMon.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BatMon.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		RES001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		RES002 /* BatMon.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = BatMon.entitlements; sourceTree = "<group>"; };
@@ -60,6 +82,34 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1088FAEEB08788DF75C58FCB /* Themes */ = {
+			isa = PBXGroup;
+			children = (
+				21616A2441F6116CCC8A8B58 /* SystemTheme.swift */,
+				1BD058EEFAE2E332C42602AF /* GruvboxTheme.swift */,
+				DC1E35841C92DA92B17A90DB /* TokyoNightTheme.swift */,
+				C38C9CF76BCBBB3DDCB292C9 /* GruvboxLightTheme.swift */,
+				E9E49C0F5387E497265A4E6B /* SolarizedLightTheme.swift */,
+			);
+			name = Themes;
+			path = Themes;
+			sourceTree = "<group>";
+		};
+		DC05C9F1A52FEB90C7836B13 /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				1088FAEEB08788DF75C58FCB /* Themes */,
+				78C4E4F0E1A2543778546A5F /* ColorTheme.swift */,
+				5C838BDD9828305D19D76325 /* MenuLayout.swift */,
+				B5FD71F697D73EAF1FB3DA69 /* ThemeEnvironment.swift */,
+				DAA0CFA15F6D205A48B8C5E8 /* ThemeRegistry.swift */,
+				D251E076DD584111F71226A8 /* ConfigurableTheme.swift */,
+				B155DB53CE7A6034454DEBEF /* CustomThemeLoader.swift */,
+			);
+			name = Theme;
+			path = Theme;
+			sourceTree = "<group>";
+		};
 		GRP001 /* BatMon */ = {
 			isa = PBXGroup;
 			children = (
@@ -70,6 +120,7 @@
 				GRP006 /* Views */,
 				GRP007 /* Utilities */,
 				GRP008 /* Resources */,
+				DC05C9F1A52FEB90C7836B13 /* Theme */,
 			);
 			path = BatMon;
 			sourceTree = "<group>";
@@ -275,6 +326,17 @@
 				VW002 /* SettingsView.swift in Sources */,
 				VW003 /* BatIconView.swift in Sources */,
 				CEA4F47CC5A503630407F630 /* SFSymbolPicker.swift in Sources */,
+				A837721845D1A5ACE0F96EC4 /* ColorTheme.swift in Sources */,
+				407F69EF96238C8ED49218F7 /* MenuLayout.swift in Sources */,
+				3321B00AF562DE123EFCCF2C /* ThemeEnvironment.swift in Sources */,
+				18CF82FE97032353F434FCD2 /* ThemeRegistry.swift in Sources */,
+				D75A6FFCCD190791D5040A6D /* SystemTheme.swift in Sources */,
+				1BCF0C77A6063D3D0D2711EE /* GruvboxTheme.swift in Sources */,
+				66BADAEB9481FAEEF527AD1A /* TokyoNightTheme.swift in Sources */,
+				16D65CE9BF6CE1C6183C9C31 /* GruvboxLightTheme.swift in Sources */,
+				6CBD2729A3B29946687BCF5E /* SolarizedLightTheme.swift in Sources */,
+				CA02E52BEABB0980CF3BF002 /* ConfigurableTheme.swift in Sources */,
+				EAD77E58AD06A434CC7E725E /* CustomThemeLoader.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -19,13 +19,18 @@ class PreferencesManager: ObservableObject {
     private init() {
         // Load settings or use defaults
         if let data = defaults.data(forKey: UserDefaultsKeys.appSettings),
-           let loaded = try? JSONDecoder().decode(AppSettings.self, from: data) {
+           var loaded = try? JSONDecoder().decode(AppSettings.self, from: data) {
+            // Migrate from old MenuStyle to new Layout + Theme system
+            loaded.migrateFromMenuStyleIfNeeded()
             self.settings = loaded
         } else {
             self.settings = AppSettings()
         }
 
         self.hasCompletedSetup = defaults.bool(forKey: UserDefaultsKeys.hasCompletedSetup)
+
+        // Save settings after migration (if any occurred)
+        saveSettings()
     }
 
     // MARK: - Settings

@@ -35,6 +35,13 @@ enum ConnectionState: Equatable {
         }
     }
 
+    var isBluetoothUnavailable: Bool {
+        if case .failed(let message) = self {
+            return message.lowercased().contains("bluetooth")
+        }
+        return false
+    }
+
     static func == (lhs: ConnectionState, rhs: ConnectionState) -> Bool {
         switch (lhs, rhs) {
         case (.disconnected, .disconnected): return true

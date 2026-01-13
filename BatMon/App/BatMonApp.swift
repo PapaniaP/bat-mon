@@ -7,6 +7,11 @@ struct BatMonApp: App {
     @StateObject private var bluetoothManager = BluetoothManager()
     @StateObject private var preferencesManager = PreferencesManager.shared
 
+    init() {
+        // Initialize default themes.json if it doesn't exist
+        ThemeRegistry.shared.initializeDefaultThemesIfNeeded()
+    }
+
     var body: some Scene {
         MenuBarExtra {
             MenuBarView()
@@ -16,6 +21,7 @@ struct BatMonApp: App {
             MenuBarLabel(bluetoothManager: bluetoothManager, preferencesManager: preferencesManager)
                 .id("menubar-\(preferencesManager.settings.displayFormat.rawValue)-\(preferencesManager.settings.compactMode)-\(preferencesManager.settings.useExperimentalFormat)-\(preferencesManager.settings.experimentalFormat.rawValue)")
         }
+        .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView()
