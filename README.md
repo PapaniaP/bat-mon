@@ -37,10 +37,11 @@ Screenshot: Show the 4 different layouts side by side
 
 Download the latest release from [GitHub Releases](https://github.com/PapaniaP/bat-mon/releases).
 
-### Homebrew (coming soon)
+### Homebrew
 
 ```bash
-brew install --cask bat-mon
+# coming soon...
+# brew install --cask bat-mon
 ```
 
 ### Build from Source
