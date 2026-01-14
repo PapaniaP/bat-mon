@@ -60,6 +60,8 @@ struct MenuBarLabel: View {
         }
     }
 
+    /// Creates a rendered NSImage of the app's bat icon using the current disconnected icon settings.
+    /// - Returns: An `NSImage` containing the bat icon sized for the menu bar, or `nil` if rendering fails. The returned image preserves the icon's original colors (not a template).
     private func renderBatIcon() -> NSImage? {
         let batView = BatIconView(
             fillColor: Color(hex: settings.disconnectedIconFillHex),
@@ -76,7 +78,10 @@ struct MenuBarLabel: View {
         return nsImage
     }
 
-    // MARK: - Standard View
+    /// Renders the standard menu bar label for a connected keyboard, showing an optional icon and the formatted battery string.
+    /// - Parameters:
+    ///   - keyboard: The keyboard whose battery values are used to produce the display string.
+    /// - Returns: A view containing an optional SF Symbol icon (from settings.menuBarIcon) and the keyboard's formatted battery text with monospaced digits.
 
     @ViewBuilder
     private func standardView(keyboard: ZMKKeyboard) -> some View {
@@ -89,6 +94,14 @@ struct MenuBarLabel: View {
         }
     }
 
+    /// Format the standard battery display string for a keyboard according to the current app settings.
+    /// - Parameter keyboard: The keyboard whose left and right battery percentages are used.
+    /// - Returns: A formatted string based on `settings.displayFormat`:
+    ///   - `.percentage`: "left{suffix}{separator}right" with `--` for missing sides.
+    ///   - `.leftOnly`: left value or `--`.
+    ///   - `.rightOnly`: right value or `--`.
+    ///   - `.lowest`: the lower of left/right or `--`.
+    ///   The `suffix` is "%" when `settings.showPercentSymbol` is true, otherwise empty.
     private func formatStandardDisplay(keyboard: ZMKKeyboard) -> String {
         let left = keyboard.leftBattery?.percentage
         let right = keyboard.rightBattery?.percentage
@@ -112,7 +125,10 @@ struct MenuBarLabel: View {
         }
     }
 
-    // MARK: - Experimental Views
+    /// Renders the keyboard battery display using the user-selected experimental text format.
+    /// - Parameters:
+    ///   - keyboard: The keyboard whose left and right battery percentages are used for formatting.
+    /// - Returns: A view showing the battery state formatted according to `settings.experimentalFormat` (pipes, blocks, bracketed, arrows, or slashes).
 
     @ViewBuilder
     private func experimentalView(keyboard: ZMKKeyboard) -> some View {
@@ -142,20 +158,32 @@ struct MenuBarLabel: View {
         }
     }
 
-    // Pipes: |85| |90|
+    /// Format optional left and right battery percentages as pipe-delimited tokens.
+    /// - Parameters:
+    ///   - left: Left battery percentage, or `nil` if unavailable.
+    ///   - right: Right battery percentage, or `nil` if unavailable.
+    /// - Returns: A string in the form `"|L| |R|"` where `L`/`R` are the percentages or `"--"` when missing.
     private func pipesFormat(left: Int?, right: Int?) -> String {
         let l = left.map { "|\($0)|" } ?? "|--|"
         let r = right.map { "|\($0)|" } ?? "|--|"
         return "\(l) \(r)"
     }
 
-    // Progress bars: ▰▰▰▰▱ ▰▰▰▱▱
+    /// Formats left and right battery percentages as two 5-character block progress bars separated by a space.
+    /// - Parameters:
+    ///   - left: Optional percentage (0–100) for the left battery; if `nil`, treated as 0.
+    ///   - right: Optional percentage (0–100) for the right battery; if `nil`, treated as 0.
+    /// - Returns: A string containing two 5-character block progress bars (left and right) separated by a space.
     private func blocksFormat(left: Int?, right: Int?) -> String {
         let leftBar = progressBar(for: left ?? 0)
         let rightBar = progressBar(for: right ?? 0)
         return "\(leftBar) \(rightBar)"
     }
 
+    /// Create a 5-character progress bar visual representing a percentage.
+    /// - Parameters:
+    ///   - percentage: The percentage value to represent (expected 0–100). Values outside this range may produce bars with all filled or all empty segments after rounding.
+    /// - Returns: A 5-character string composed of filled blocks (`▰`) and empty blocks (`▱`) where the number of filled blocks is the percentage rounded to the nearest segment.
     private func progressBar(for percentage: Int) -> String {
         let total = 5
         let filled = Int(round(Double(percentage) / 100.0 * Double(total)))
@@ -165,21 +193,33 @@ struct MenuBarLabel: View {
         return "\(filledStr)\(emptyStr)"
     }
 
-    // Bracketed: [L:85|R:90]
+    /// Formats left and right battery percentages into a bracketed representation.
+    /// - Parameters:
+    ///   - left: The left battery percentage, or `nil` if unavailable.
+    ///   - right: The right battery percentage, or `nil` if unavailable.
+    /// - Returns: A string in the form "[L:<left>|R:<right>]" where missing values are represented by `"--"`.
     private func bracketedFormat(left: Int?, right: Int?) -> String {
         let l = left.map { "\($0)" } ?? "--"
         let r = right.map { "\($0)" } ?? "--"
         return "[L:\(l)|R:\(r)]"
     }
 
-    // Arrows: 85 › 90
+    /// Formats left and right battery percentages using an arrow separator.
+    /// - Parameters:
+    ///   - left: The left battery percentage, or `nil` if unknown.
+    ///   - right: The right battery percentage, or `nil` if unknown.
+    /// - Returns: A string in the form "`L › R`" where `L` and `R` are the numeric percentages or `"--"` when missing.
     private func arrowsFormat(left: Int?, right: Int?) -> String {
         let l = left.map { "\($0)" } ?? "--"
         let r = right.map { "\($0)" } ?? "--"
         return "\(l) › \(r)"
     }
 
-    // Slashes: 85/90
+    /// Format left and right battery percentages as a slash-separated string.
+    /// - Parameters:
+    ///   - left: The left battery percentage, or `nil` if unknown (represented as "`--`").
+    ///   - right: The right battery percentage, or `nil` if unknown (represented as "`--`").
+    /// - Returns: A string in the form `"<left>/<right>"` where missing values are shown as `--`.
     private func slashesFormat(left: Int?, right: Int?) -> String {
         let l = left.map { "\($0)" } ?? "--"
         let r = right.map { "\($0)" } ?? "--"

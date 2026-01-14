@@ -14,7 +14,10 @@ extension EnvironmentValues {
 }
 
 extension View {
-    /// Sets the color theme for this view and its descendants
+    /// Sets the color theme for this view and its descendant views.
+    /// - Parameters:
+    ///   - theme: The `ColorTheme` to inject into the environment.
+    /// - Returns: A view that applies the given color theme to the view hierarchy.
     func colorTheme(_ theme: any ColorTheme) -> some View {
         environment(\.colorTheme, theme)
     }

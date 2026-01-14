@@ -33,12 +33,15 @@ class CustomThemeLoader {
     }
 
     /// Load all custom themes from the config file
-    /// Returns empty array if file doesn't exist or is invalid
+    /// Load configured themes from persistent storage, returning only successfully parsed themes.
+    /// - Returns: An array of `ConfigurableTheme` instances parsed successfully from `themes.json`; invalid or malformed entries are omitted.
     func loadThemes() -> [ConfigurableTheme] {
         loadThemesWithValidation().validThemes
     }
 
-    /// Load themes and return both valid themes and invalid themes with error info
+    /// Loads and validates themes from the themes.json file, returning both successfully parsed themes and parsing errors.
+    /// Attempts to read themes.json as a JSON array and validates each object with `ConfigurableTheme.parse(from:)`. If the file is missing or if reading/parsing fails, an empty `LoadResult` is returned.
+    /// - Returns: A `LoadResult` containing `validThemes` (parsed `ConfigurableTheme` instances) and `invalidThemes` (`InvalidTheme` entries describing validation failures).
     func loadThemesWithValidation() -> LoadResult {
         guard FileManager.default.fileExists(atPath: themesFilePath.path) else {
             logger.info("No themes.json found at \(self.themesFilePath.path)")
@@ -73,7 +76,10 @@ class CustomThemeLoader {
         }
     }
 
-    /// Save themes to the config file
+    /// Persist the given themes to the `themes.json` file in the app's configuration directory.
+    /// - Parameters:
+    ///   - themes: The list of `ConfigurableTheme` objects to write; this will replace the existing themes file.
+    /// - Throws: An error if creating/ensuring the configuration directory, serializing the themes to JSON, or writing the file fails.
     func saveThemes(_ themes: [ConfigurableTheme]) throws {
         try ensureConfigDirectoryExists()
 
@@ -84,7 +90,10 @@ class CustomThemeLoader {
         logger.info("Saved \(themes.count) themes to \(self.themesFilePath.path)")
     }
 
-    /// Add a new theme to the config file
+    /// Adds a theme to the persisted themes, replacing any existing theme with the same id.
+    /// - Parameters:
+    ///   - theme: The `ConfigurableTheme` to add or replace in the stored themes list.
+    /// - Throws: An error if persisting the updated themes to disk fails.
     func addTheme(_ theme: ConfigurableTheme) throws {
         var themes = loadThemes()
 
@@ -95,7 +104,10 @@ class CustomThemeLoader {
         try saveThemes(themes)
     }
 
-    /// Update an existing theme in the config file
+    /// Adds or updates a configurable theme in the persisted themes list.
+    /// - Parameters:
+    ///   - theme: The theme to add or update. If a theme with the same `id` already exists it will be replaced; otherwise the theme is appended.
+    /// - Throws: An error if saving the updated themes to disk fails.
     func updateTheme(_ theme: ConfigurableTheme) throws {
         var themes = loadThemes()
 
@@ -108,19 +120,27 @@ class CustomThemeLoader {
         try saveThemes(themes)
     }
 
-    /// Remove a theme from the config file
+    /// Removes any persisted theme with the specified identifier.
+    /// - Parameters:
+    ///   - id: The unique identifier of the theme to remove.
+    /// - Throws: An error if updating the stored themes fails (for example, if the config directory cannot be created or the themes file cannot be written).
     func removeTheme(withId id: String) throws {
         var themes = loadThemes()
         themes.removeAll { $0.id == id }
         try saveThemes(themes)
     }
 
-    /// Check if the themes.json file exists
+    /// Checks whether the `themes.json` file exists in the application's config directory.
+    /// - Returns: `true` if `themes.json` exists at the configured path, `false` otherwise.
     func themesFileExists() -> Bool {
         FileManager.default.fileExists(atPath: themesFilePath.path)
     }
 
-    /// Create the config directory and default themes.json if they don't exist
+    /// Creates a themes.json populated with the built-in default themes if no themes file exists.
+    /// 
+    /// If a themes.json already exists, the method does nothing. Otherwise it ensures the configuration
+    /// directory exists and writes the predefined default themes to themes.json. Failure to create the
+    /// directory or write the file will be logged as an error.
     func initializeDefaultThemesIfNeeded() {
         guard !themesFileExists() else {
             logger.info("themes.json already exists, skipping initialization")
@@ -138,7 +158,10 @@ class CustomThemeLoader {
 
     // MARK: - File Watching
 
-    /// Start watching the themes.json file for changes
+    /// Begins monitoring the persisted themes.json file for external changes and invokes the provided callback when modifications occur.
+    /// - Parameters:
+    ///   - onChange: Closure invoked whenever the themes file is written, deleted, or renamed.
+    /// - Note: Any existing watcher is stopped before starting a new one. If the file cannot be opened for event monitoring, the watcher will not be started.
     func startWatching(onChange: @escaping () -> Void) {
         stopWatching()
 
@@ -170,13 +193,16 @@ class CustomThemeLoader {
         logger.info("Started watching themes.json for changes")
     }
 
-    /// Stop watching the themes.json file
+    /// Stops observing changes to the themes file and releases the watcher.
+    /// 
+    /// Cancels any active file-system dispatch source and clears the stored reference so watching can be restarted.
     func stopWatching() {
         dispatchSource?.cancel()
         dispatchSource = nil
     }
 
-    // MARK: - Private Helpers
+    /// Ensures the application's configuration directory exists, creating it if necessary.
+    /// - Throws: A `FileManager` error if creating the directory fails.
 
     private func ensureConfigDirectoryExists() throws {
         if !FileManager.default.fileExists(atPath: configDirectory.path) {

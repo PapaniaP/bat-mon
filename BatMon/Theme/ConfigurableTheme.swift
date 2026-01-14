@@ -66,7 +66,10 @@ struct ConfigurableTheme: ColorTheme {
     /// Required color keys for a valid theme
     static let requiredColorKeys = ["background", "text", "accent", "healthy", "warning", "alert"]
 
-    /// Validate JSON and return either a valid ConfigurableTheme or an InvalidTheme
+    /// Parses a JSON dictionary into a `ConfigurableTheme`, validating required fields.
+    /// - Parameters:
+    ///   - json: A dictionary expected to contain a `"name"` string and a `"colors"` dictionary mapping color keys to hex strings.
+    /// - Returns: `.success(ConfigurableTheme)` when a valid theme is constructed; `.failure(InvalidTheme)` when required fields are missing (the returned `InvalidTheme` contains the derived `id`, provided `name`, and the list of missing color keys).
     static func parse(from json: [String: Any]) -> Result<ConfigurableTheme, InvalidTheme> {
         guard let name = json["name"] as? String else {
             return .failure(InvalidTheme(
@@ -151,7 +154,10 @@ struct ConfigurableTheme: ColorTheme {
 
     // MARK: - Export to JSON
 
-    /// Convert theme to JSON dictionary for saving
+    /// Serialize the theme into a JSON-compatible dictionary.
+    /// 
+    /// The returned dictionary contains the theme `name` and a `colors` dictionary mapping color keys to hex strings. Optional override keys (`backgroundSecondary`, `textSecondary`, `textMuted`, `critical`, `divider`) are included in the `colors` dictionary only if they were explicitly set.
+    /// - Returns: A `[String: Any]` dictionary suitable for JSON encoding with keys `"name"` and `"colors"`.
     func toJSON() -> [String: Any] {
         var colors: [String: String] = [
             "background": _background.toHex(),
@@ -179,7 +185,10 @@ struct ConfigurableTheme: ColorTheme {
 // MARK: - Color Extension for Lightening
 
 extension Color {
-    /// Lightens the color by the given amount (0.0 to 1.0)
+    /// Create a lighter variant of this color by adding `amount` to each RGB component.
+    /// - Parameters:
+    ///   - amount: Value added to the red, green, and blue components. Use positive values to lighten (commonly 0...1). Component values are clamped at 1.0; negative values will reduce component values.
+    /// - Returns: A `Color` with adjusted RGB components, or `self` if the color cannot be converted to the device RGB color space.
     func lighter(by amount: Double) -> Color {
         guard let components = NSColor(self).usingColorSpace(.deviceRGB) else {
             return self

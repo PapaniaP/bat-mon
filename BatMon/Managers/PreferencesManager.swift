@@ -50,7 +50,8 @@ class PreferencesManager: ObservableObject {
         logger.info("Settings reset to defaults")
     }
 
-    // MARK: - Keyboard Persistence
+    /// Persists the given keyboard as the currently selected keyboard.
+    /// - Parameter keyboard: The `ZMKKeyboard` to save as the selected keyboard. Stores encoded keyboard data in user defaults and logs success or failure.
 
     func saveKeyboard(_ keyboard: ZMKKeyboard) {
         do {
@@ -77,6 +78,9 @@ class PreferencesManager: ObservableObject {
         }
     }
 
+    /// Removes the persisted selected keyboard from user defaults.
+    /// 
+    /// Specifically deletes the value stored under `UserDefaultsKeys.selectedKeyboardData`. If no value exists there, this call has no effect.
     func clearSelectedKeyboard() {
         defaults.removeObject(forKey: UserDefaultsKeys.selectedKeyboardData)
         logger.info("Cleared selected keyboard")

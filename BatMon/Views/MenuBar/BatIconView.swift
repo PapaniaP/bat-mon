@@ -29,6 +29,10 @@ struct BatIconView: View {
 
 /// The bat silhouette as a SwiftUI Shape
 struct BatShape: Shape {
+    /// Constructs the bat silhouette path scaled to the provided rectangle.
+    /// - Parameters:
+    ///   - rect: The bounding rectangle in which the bat shape is fitted. The shape is generated from a 22×14 reference and scaled to this rect.
+    /// - Returns: A `Path` representing the bat silhouette scaled to and positioned within `rect`.
     func path(in rect: CGRect) -> Path {
         var path = Path()
 
