@@ -4,12 +4,14 @@ A reliable macOS menu bar app for monitoring ZMK keyboard battery levels.
 
 macOS's native Bluetooth UI only shows the battery level of one keyboard half. bat-mon shows both halves and automatically reconnects after sleep/wake cycles and system restarts.
 
-[![GitHub release](https://img.shields.io/github/v/release/PapaniaP/bat-mon)](https://github.com/PapaniaP/bat-mon/releases)
-[![GitHub license](https://img.shields.io/github/license/PapaniaP/bat-mon)](https://github.com/PapaniaP/bat-mon/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/PapaniaP/bat-mon/blob/main/LICENSE)
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)](https://github.com/PapaniaP/bat-mon)
+[![Swift 5.9](https://img.shields.io/badge/Swift-5.9-orange)](https://github.com/PapaniaP/bat-mon)
 
-<!-- TODO: Add screenshot here -->
-<!-- ![bat-mon screenshot](assets/screenshot.png) -->
+<!--
+Screenshot: Add a screenshot of the menu bar dropdown here
+![bat-mon menu bar](assets/menubar.png)
+-->
 
 ## Features
 
@@ -19,6 +21,11 @@ macOS's native Bluetooth UI only shows the battery level of one keyboard half. b
 - **Custom themes** - 9 built-in themes + create your own via JSON
 - **Low battery alerts** - Native macOS notifications at configurable thresholds
 - **Menu bar customization** - Icons, separators, compact mode, and more
+
+<!--
+Screenshot: Show the 4 different layouts side by side
+![Layouts](assets/layouts.png)
+-->
 
 ## Installation
 
@@ -50,6 +57,11 @@ Build and run with Xcode (⌘R).
 4. Select your keyboard to connect
 
 The app will remember your keyboard and automatically reconnect.
+
+<!--
+Screenshot: Show Settings window with Appearance tab open
+![Settings](assets/settings.png)
+-->
 
 ## Custom Themes
 
@@ -170,6 +182,11 @@ If a theme is missing required fields, it will appear in Settings with a warning
 Themes are hot-reloaded - save the file and changes appear immediately in Settings.
 
 ## Built-in Themes
+
+<!--
+Screenshot: Show theme picker in Settings with a few theme previews
+![Themes](assets/themes.png)
+-->
 
 ### Hardcoded (always available)
 - System (adapts to macOS appearance)
