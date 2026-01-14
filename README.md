@@ -262,6 +262,13 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY=y
 
 MIT License - see [LICENSE](LICENSE) for details.
 
+## Support
+
+<!--
+Buy Me a Coffee: Uncomment when you have an account
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://www.buymeacoffee.com/YOUR_USERNAME)
+-->
+
 ## Contributing
 
 Contributions welcome! Please open an issue first to discuss what you'd like to change.
