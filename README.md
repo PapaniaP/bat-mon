@@ -2,9 +2,14 @@
 
 A reliable macOS menu bar app for monitoring ZMK keyboard battery levels.
 
-![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)
-![Swift 5.9](https://img.shields.io/badge/Swift-5.9-orange)
-![License MIT](https://img.shields.io/badge/license-MIT-green)
+macOS's native Bluetooth UI only shows the battery level of one keyboard half. bat-mon shows both halves and automatically reconnects after sleep/wake cycles and system restarts.
+
+[![GitHub release](https://img.shields.io/github/v/release/PapaniaP/bat-mon)](https://github.com/PapaniaP/bat-mon/releases)
+[![GitHub license](https://img.shields.io/github/license/PapaniaP/bat-mon)](https://github.com/PapaniaP/bat-mon/blob/main/LICENSE)
+[![macOS 14+](https://img.shields.io/badge/macOS-14%2B-blue)](https://github.com/PapaniaP/bat-mon)
+
+<!-- TODO: Add screenshot here -->
+<!-- ![bat-mon screenshot](assets/screenshot.png) -->
 
 ## Features
 
@@ -183,26 +188,54 @@ Themes are hot-reloaded - save the file and changes appear immediately in Settin
 
 - macOS 14.0 or later
 - Bluetooth-enabled Mac
-- ZMK-powered keyboard with Battery Service (most ZMK keyboards)
+- ZMK-powered split keyboard with peripheral battery reporting enabled
+
+### ZMK Firmware Configuration
+
+For bat-mon to display battery levels for both halves of your split keyboard, your ZMK firmware must be configured to fetch and proxy the peripheral's battery level over Bluetooth.
+
+Add the following to your **central half's** `.conf` file (usually the left half):
+
+```ini
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY=y
+```
+
+After updating your config, rebuild and flash your firmware.
+
+See the [ZMK battery documentation](https://zmk.dev/docs/config/battery) for more details.
 
 ## Troubleshooting
 
 ### "Bluetooth access denied"
 
-Click the "Allow Bluetooth" button in the app, which opens System Settings → Privacy & Security → Bluetooth. Enable access for bat-mon.
+Click the "Allow Bluetooth" button in the app to open System Settings → Privacy & Security → Bluetooth. Enable access for bat-mon.
 
 ### Keyboard not found
 
 1. Ensure your keyboard is powered on and in range
 2. Check that Bluetooth is enabled on your Mac
 3. Try "Scan for Keyboards" again
-4. Some keyboards need to be in pairing mode to be discovered
+
+### Only one half shows battery
+
+Your central half needs to fetch and proxy the peripheral's battery level. Add these to your central half's `.conf` file and reflash:
+
+```ini
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_FETCHING=y
+CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY=y
+```
 
 ### Theme not appearing
 
 1. Check the JSON syntax is valid
 2. Ensure all 6 required color fields are present
-3. Look for the theme with a warning icon in Settings - click it to see what's missing
+3. Click the warning icon in Settings to see which fields are missing
+
+## Related Projects
+
+- [Mighty-Mitts](https://github.com/codyd51/Mighty-Mitts) - macOS menu bar app for ZMK battery levels (Objective-C)
+- [zmk-battery-center](https://github.com/kot149/zmk-battery-center) - Cross-platform system tray app (Tauri/Rust)
 
 ## License
 
@@ -211,8 +244,3 @@ MIT License - see [LICENSE](LICENSE) for details.
 ## Contributing
 
 Contributions welcome! Please open an issue first to discuss what you'd like to change.
-
-## Acknowledgments
-
-- Built with SwiftUI and CoreBluetooth
-- Inspired by the ZMK community
