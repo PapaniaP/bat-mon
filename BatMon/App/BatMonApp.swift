@@ -151,8 +151,8 @@ struct MenuBarLabel: View {
 
     // Progress bars: ▰▰▰▰▱ ▰▰▰▱▱
     private func blocksFormat(left: Int?, right: Int?) -> String {
-        let leftBar = progressBar(for: left ?? 0)
-        let rightBar = progressBar(for: right ?? 0)
+        let leftBar = left.map { progressBar(for: $0) } ?? "-----"
+        let rightBar = right.map { progressBar(for: $0) } ?? "-----"
         return "\(leftBar) \(rightBar)"
     }
 

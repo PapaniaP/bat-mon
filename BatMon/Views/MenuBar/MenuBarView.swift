@@ -1133,10 +1133,17 @@ struct TUIBatteryBar: View {
         HStack(spacing: 8) {
             Text(label)
                 .foregroundStyle(theme.foregroundSecondary)
-            Text(renderBar(percentage ?? 0))
-                .foregroundStyle(barColor)
-            Text("\(String(format: "%3d", percentage ?? 0))%")
-                .foregroundStyle(theme.foreground)
+            if let pct = percentage {
+                Text(renderBar(pct))
+                    .foregroundStyle(barColor)
+                Text("\(String(format: "%3d", pct))%")
+                    .foregroundStyle(theme.foreground)
+            } else {
+                Text("──────────")
+                    .foregroundStyle(theme.foregroundTertiary)
+                Text(" --%")
+                    .foregroundStyle(theme.foregroundTertiary)
+            }
         }
         .font(.system(size: 11, design: .monospaced))
     }
@@ -1146,8 +1153,10 @@ struct TUIDivider: View {
     @Environment(\.colorTheme) var theme
 
     var body: some View {
-        Divider()
-            .background(theme.divider)
+        Rectangle()
+            .fill(theme.divider)
+            .frame(height: 1)
+            .padding(.vertical, 4)
     }
 }
 

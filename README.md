@@ -74,7 +74,7 @@ bat-mon supports custom color themes via a JSON configuration file.
 
 ### File Location
 
-```
+```text
 ~/Library/Application Support/BatMon/themes.json
 ```
 

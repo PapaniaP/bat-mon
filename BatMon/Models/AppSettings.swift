@@ -235,7 +235,7 @@ extension AppSettings {
             colorThemeId = "system"
         case .retro:
             menuLayout = .tui
-            colorThemeId = "githubDark"
+            colorThemeId = "github_dark"
         case .gruvbox:
             menuLayout = .tui
             colorThemeId = "gruvbox"

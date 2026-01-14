@@ -30,6 +30,7 @@ class CustomThemeLoader {
     struct LoadResult {
         let validThemes: [ConfigurableTheme]
         let invalidThemes: [InvalidTheme]
+        let rawJSON: [[String: Any]]  // Preserves original JSON for save operations
     }
 
     /// Load all custom themes from the config file
@@ -42,14 +43,14 @@ class CustomThemeLoader {
     func loadThemesWithValidation() -> LoadResult {
         guard FileManager.default.fileExists(atPath: themesFilePath.path) else {
             logger.info("No themes.json found at \(self.themesFilePath.path)")
-            return LoadResult(validThemes: [], invalidThemes: [])
+            return LoadResult(validThemes: [], invalidThemes: [], rawJSON: [])
         }
 
         do {
             let data = try Data(contentsOf: themesFilePath)
             guard let jsonArray = try JSONSerialization.jsonObject(with: data) as? [[String: Any]] else {
                 logger.error("themes.json is not a valid array")
-                return LoadResult(validThemes: [], invalidThemes: [])
+                return LoadResult(validThemes: [], invalidThemes: [], rawJSON: [])
             }
 
             var validThemes: [ConfigurableTheme] = []
@@ -66,14 +67,14 @@ class CustomThemeLoader {
             }
 
             logger.info("Loaded \(validThemes.count) valid themes, \(invalidThemes.count) invalid")
-            return LoadResult(validThemes: validThemes, invalidThemes: invalidThemes)
+            return LoadResult(validThemes: validThemes, invalidThemes: invalidThemes, rawJSON: jsonArray)
         } catch {
             logger.error("Failed to load themes.json: \(error.localizedDescription)")
-            return LoadResult(validThemes: [], invalidThemes: [])
+            return LoadResult(validThemes: [], invalidThemes: [], rawJSON: [])
         }
     }
 
-    /// Save themes to the config file
+    /// Save themes to the config file (replaces all themes)
     func saveThemes(_ themes: [ConfigurableTheme]) throws {
         try ensureConfigDirectoryExists()
 
@@ -84,35 +85,50 @@ class CustomThemeLoader {
         logger.info("Saved \(themes.count) themes to \(self.themesFilePath.path)")
     }
 
-    /// Add a new theme to the config file
-    func addTheme(_ theme: ConfigurableTheme) throws {
-        var themes = loadThemes()
+    /// Save raw JSON array to the config file (preserves invalid themes)
+    private func saveRawJSON(_ jsonArray: [[String: Any]]) throws {
+        try ensureConfigDirectoryExists()
 
-        // Check for duplicate names
-        themes.removeAll { $0.id == theme.id }
-        themes.append(theme)
-
-        try saveThemes(themes)
+        let data = try JSONSerialization.data(withJSONObject: jsonArray, options: [.prettyPrinted, .sortedKeys])
+        try data.write(to: themesFilePath, options: .atomic)
+        logger.info("Saved \(jsonArray.count) themes to \(self.themesFilePath.path)")
     }
 
-    /// Update an existing theme in the config file
-    func updateTheme(_ theme: ConfigurableTheme) throws {
-        var themes = loadThemes()
+    /// Helper to get theme ID from raw JSON
+    private func themeId(from json: [String: Any]) -> String? {
+        guard let name = json["name"] as? String else { return nil }
+        return name.lowercased().replacingOccurrences(of: " ", with: "_")
+    }
 
-        if let index = themes.firstIndex(where: { $0.id == theme.id }) {
-            themes[index] = theme
+    /// Add a new theme to the config file (preserves invalid themes)
+    func addTheme(_ theme: ConfigurableTheme) throws {
+        var rawJSON = loadThemesWithValidation().rawJSON
+
+        // Remove any existing theme with the same ID
+        rawJSON.removeAll { themeId(from: $0) == theme.id }
+        rawJSON.append(theme.toJSON())
+
+        try saveRawJSON(rawJSON)
+    }
+
+    /// Update an existing theme in the config file (preserves invalid themes)
+    func updateTheme(_ theme: ConfigurableTheme) throws {
+        var rawJSON = loadThemesWithValidation().rawJSON
+
+        if let index = rawJSON.firstIndex(where: { themeId(from: $0) == theme.id }) {
+            rawJSON[index] = theme.toJSON()
         } else {
-            themes.append(theme)
+            rawJSON.append(theme.toJSON())
         }
 
-        try saveThemes(themes)
+        try saveRawJSON(rawJSON)
     }
 
-    /// Remove a theme from the config file
+    /// Remove a theme from the config file (preserves invalid themes)
     func removeTheme(withId id: String) throws {
-        var themes = loadThemes()
-        themes.removeAll { $0.id == id }
-        try saveThemes(themes)
+        var rawJSON = loadThemesWithValidation().rawJSON
+        rawJSON.removeAll { themeId(from: $0) == id }
+        try saveRawJSON(rawJSON)
     }
 
     /// Check if the themes.json file exists

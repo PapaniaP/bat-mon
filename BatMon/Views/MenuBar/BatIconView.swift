@@ -13,6 +13,9 @@ struct BatIconView: View {
     }
 
     var body: some View {
+        // Inset the shape slightly to prevent border clipping at edges
+        let inset = borderColor != nil ? borderWidth / 2 : 0
+
         BatShape()
             .fill(fillColor)
             .overlay(
@@ -23,6 +26,7 @@ struct BatIconView: View {
                     }
                 }
             )
+            .padding(inset)
             .frame(width: 20, height: 14)
     }
 }

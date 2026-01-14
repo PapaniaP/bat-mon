@@ -47,7 +47,8 @@ extension ColorTheme {
     }
 
     func batteryColor(for percentage: Int) -> Color {
-        switch percentage {
+        let clamped = min(max(percentage, 0), 100)
+        switch clamped {
         case 0...10: return critical
         case 11...20: return error
         case 21...40: return warning
