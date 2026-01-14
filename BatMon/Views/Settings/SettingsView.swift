@@ -726,6 +726,11 @@ struct ThemeEditorSheet: View {
         }
     }
 
+    /// Validates the theme name, constructs a configurable theme from the editor fields, and persists it.
+    /// 
+    /// If the trimmed theme name is empty, sets `errorMessage` to `"Theme name cannot be empty"` and returns.
+    /// On successful save, sets the saved theme as the current color theme in `preferencesManager.settings.colorThemeId` and calls `dismiss()`.
+    /// On failure, sets `errorMessage` to `"Failed to save theme: <localized error description>"`.
     private func saveTheme() {
         let trimmedName = themeName.trimmingCharacters(in: .whitespaces)
         guard !trimmedName.isEmpty else {
@@ -753,6 +758,9 @@ struct ThemeEditorSheet: View {
         }
     }
 
+    /// Deletes the currently edited custom theme and closes the editor.
+    /// 
+    /// If the edited theme is the active selection, this switches the selected theme to `"system"` before attempting removal. On successful deletion the theme is removed from the theme registry and the sheet is dismissed. If deletion fails, an explanatory message is stored in `errorMessage`.
     private func deleteTheme() {
         guard let theme = editingTheme else { return }
 

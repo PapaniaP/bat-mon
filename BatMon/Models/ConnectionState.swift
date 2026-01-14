@@ -42,6 +42,11 @@ enum ConnectionState: Equatable {
         return false
     }
 
+    /// Compares two `ConnectionState` values for equality, including their associated values.
+    /// - Parameters:
+    ///   - lhs: The left-hand `ConnectionState` to compare.
+    ///   - rhs: The right-hand `ConnectionState` to compare.
+    /// - Returns: `true` if both are the same case and any associated values are equal, `false` otherwise.
     static func == (lhs: ConnectionState, rhs: ConnectionState) -> Bool {
         switch (lhs, rhs) {
         case (.disconnected, .disconnected): return true

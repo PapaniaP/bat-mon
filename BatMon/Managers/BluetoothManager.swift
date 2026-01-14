@@ -69,7 +69,9 @@ class BluetoothManager: NSObject, ObservableObject {
         stopScanning()
     }
 
-    // MARK: - Public Methods
+    /// Begins device discovery by retrieving already-connected peripherals advertising the Battery Service and populating `availableKeyboards`.
+    /// 
+    /// If Bluetooth is not powered on, sets `connectionState` to `.failed("Bluetooth not available")` and returns. While running this method it updates `isScanning` and `connectionState`, clears `availableKeyboards` and `discoveredPeripherals`, and adds any connected peripherals that have a non-empty name to those collections. This method does not perform active BLE scanning; it only queries devices already connected to the system. Unnamed peripherals are skipped.
 
     func startScanning() {
         let btState = centralManager.state
@@ -446,6 +448,13 @@ extension BluetoothManager: CBPeripheralDelegate {
         }
     }
 
+    /// Handle updates to a peripheral's battery-level characteristic and apply the reading to the selected keyboard.
+    /// 
+    /// Clamps the reported value to 0–100, creates a `BatteryLevel` with the current timestamp, determines whether the reading corresponds to the left or right half, updates `selectedKeyboard` to trigger publishing, logs the value, and invokes battery-threshold checks which may post notifications.
+    /// - Parameters:
+    ///   - peripheral: The `CBPeripheral` that sent the update.
+    ///   - characteristic: The `CBCharacteristic` whose value was updated (expected to be the battery-level characteristic).
+    ///   - error: An optional error if the read failed; when present the update is logged and ignored.
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         if let error = error {
             logger.error("Read error: \(error.localizedDescription)")
@@ -486,6 +495,14 @@ extension BluetoothManager: CBPeripheralDelegate {
         checkBatteryThresholds(percentage: percentage, half: half)
     }
 
+    /// Triggers low- or critical-battery notifications when a keyboard half's battery meets configured thresholds.
+    /// 
+    /// Checks user notification settings and the currently selected keyboard; if notifications are enabled and a keyboard is selected,
+    /// sends a critical battery alert when `percentage` is less than or equal to the configured critical threshold, otherwise
+    /// sends a low battery alert when `percentage` is less than or equal to the configured low threshold.
+    /// - Parameters:
+    ///   - percentage: Battery level percentage (0–100) for the keyboard half.
+    ///   - half: The keyboard half (e.g., left or right) for which the battery level applies.
     private func checkBatteryThresholds(percentage: Int, half: KeyboardHalf) {
         let settings = PreferencesManager.shared.settings
 

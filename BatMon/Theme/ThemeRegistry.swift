@@ -43,42 +43,59 @@ class ThemeRegistry: ObservableObject {
 
     // MARK: - Public API
 
-    /// Look up a theme by its ID
+    /// Selects the theme with the specified identifier or falls back to the default theme.
+    /// - Parameters:
+    ///   - id: The identifier of the theme to look up.
+    /// - Returns: The theme matching `id`, or the registry's default theme if no match is found.
     func theme(for id: String) -> any ColorTheme {
         allThemes.first { $0.id == id } ?? Self.defaultTheme
     }
 
-    /// Reload custom themes from the config file
+    /// Reloads user-configurable themes from persistent configuration and updates the registry state.
+    /// 
+    /// Replaces `customThemes` with the validated valid themes and `invalidThemes` with any entries that failed validation.
     func reloadCustomThemes() {
         let result = CustomThemeLoader.shared.loadThemesWithValidation()
         customThemes = result.validThemes
         invalidThemes = result.invalidThemes
     }
 
-    /// Check if a theme is hardcoded (not editable)
+    /// Checks whether a theme identifier refers to a hardcoded theme.
+    /// - Returns: `true` if the theme id corresponds to a hardcoded theme, `false` otherwise.
     func isHardcoded(_ themeId: String) -> Bool {
         Self.hardcodedThemes.contains { $0.id == themeId }
     }
 
-    /// Check if a theme is from the config file (editable)
+    /// Checks whether a theme identifier corresponds to a user-configurable theme.
+    /// - Parameters:
+    ///   - themeId: The identifier of the theme to check.
+    /// - Returns: `true` if a custom theme with the given id exists, `false` otherwise.
     func isCustom(_ themeId: String) -> Bool {
         customThemes.contains { $0.id == themeId }
     }
 
-    /// Add or update a custom theme
+    /// Saves or updates a configurable theme in the persistent custom themes store and refreshes the registry.
+    /// - Parameters:
+    ///   - theme: The configurable theme to add or update.
+    /// - Throws: An error if the theme cannot be persisted to the custom themes configuration.
     func saveCustomTheme(_ theme: ConfigurableTheme) throws {
         try CustomThemeLoader.shared.updateTheme(theme)
         reloadCustomThemes()
     }
 
-    /// Remove a custom theme
+    /// Removes the user-configurable theme with the given identifier.
+    /// If the identifier corresponds to a hardcoded theme, the call has no effect.
+    /// On successful removal, the registry reloads its custom themes to reflect the change.
+    /// - Parameter id: The identifier of the custom theme to remove.
+    /// - Throws: An error from `CustomThemeLoader` if the theme could not be removed.
     func removeCustomTheme(withId id: String) throws {
         guard !isHardcoded(id) else { return }
         try CustomThemeLoader.shared.removeTheme(withId: id)
         reloadCustomThemes()
     }
 
-    /// Initialize default themes.json if it doesn't exist
+    /// Creates default theme files in the configuration if they are missing and reloads the registry's custom and invalid themes.
+    /// After calling this, `customThemes` and `invalidThemes` are refreshed to reflect any newly created or changed theme definitions.
     func initializeDefaultThemesIfNeeded() {
         CustomThemeLoader.shared.initializeDefaultThemesIfNeeded()
         reloadCustomThemes()

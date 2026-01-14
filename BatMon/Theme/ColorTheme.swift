@@ -46,6 +46,10 @@ extension ColorTheme {
         foregroundTertiary.opacity(0.3)
     }
 
+    /// Selects a semantic color that represents the given battery percentage.
+    /// - Parameters:
+    ///   - percentage: Battery level as an integer percentage (expected 0–100).
+    /// - Returns: `critical` for percentages 0–10, `error` for 11–20, `warning` for 21–40, and `success` for 41 and above.
     func batteryColor(for percentage: Int) -> Color {
         switch percentage {
         case 0...10: return critical

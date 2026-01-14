@@ -1,7 +1,9 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Bluetooth Settings Helper
+/// Opens the macOS Privacy & Security > Bluetooth settings pane where Bluetooth permissions are managed.
+/// 
+/// If the system URL cannot be created, the function performs no action.
 
 func openBluetoothSettings() {
     // Open Privacy & Security > Bluetooth where app permissions are managed
@@ -887,6 +889,8 @@ struct RichControlsSection: View {
 // MARK: - Date Extension
 
 extension Date {
+    /// Formats the date as a compact relative time string.
+    /// - Returns: A compact relative time string — `"just now"` if less than 60 seconds have passed, `"<n>m ago"` for minutes, or `"<n>h ago"` for hours.
     func timeAgoDisplay() -> String {
         let seconds = Int(-self.timeIntervalSinceNow)
 
@@ -1122,6 +1126,9 @@ struct TUIBatteryBar: View {
         return theme.batteryColor(for: pct)
     }
 
+    /// Renders a 10-character horizontal progress bar that visualizes a percentage.
+    /// - Parameter pct: Percentage value (expected 0...100) used to determine filled length.
+    /// - Returns: A 10-character string made of filled segments (`━`) followed by empty segments (`─`) proportionate to `pct`.
     private func renderBar(_ pct: Int) -> String {
         let total = 10
         let filled = Int(Double(pct) / 100.0 * Double(total))

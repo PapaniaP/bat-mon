@@ -218,7 +218,17 @@ enum MenuStyle: String, Codable, CaseIterable, Identifiable {
 // MARK: - Migration from MenuStyle to Layout + Theme
 
 extension AppSettings {
-    /// Migrates from the old MenuStyle system to the new Layout + Theme system
+    /// Migrate a legacy `menuStyle` into the new `menuLayout` and `colorThemeId`, then clear the legacy value.
+    /// 
+    /// If `menuStyle` is set, it is mapped to the corresponding `menuLayout` and `colorThemeId`:
+    /// - `native` -> `.native`, `"system"`
+    /// - `rich` -> `.rich`, `"system"`
+    /// - `minimal` -> `.minimal`, `"system"`
+    /// - `retro` -> `.tui`, `"githubDark"`
+    /// - `gruvbox` -> `.tui`, `"gruvbox"`
+    /// - `tokyoNight` -> `.tui`, `"tokyoNight"`
+    ///
+    /// After mapping, `menuStyle` is set to `nil` to indicate migration completion.
     mutating func migrateFromMenuStyleIfNeeded() {
         guard let oldStyle = menuStyle else { return }
 
@@ -276,6 +286,8 @@ extension Color {
         )
     }
 
+    /// Convert this Color to an sRGB hex string in `#RRGGBB` format.
+    /// - Returns: A hex color string in the form `#RRGGBB`; `#000000` if the color components cannot be extracted.
     func toHex() -> String {
         guard let components = NSColor(self).cgColor.components, components.count >= 3 else {
             return "#000000"
