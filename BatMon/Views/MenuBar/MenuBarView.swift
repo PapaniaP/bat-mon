@@ -903,74 +903,247 @@ extension Date {
 }
 
 // MARK: - =====================================================
-// MARK: - MINIMAL STYLE
+// MARK: - MINIMAL STYLE (Swiss Precision Design)
 // MARK: - =====================================================
 
 struct MinimalMenuBarView: View {
     @EnvironmentObject var bluetoothManager: BluetoothManager
     @Environment(\.colorTheme) var theme
+    @Environment(\.openSettings) private var openSettings
+
+    // MARK: - Spacing Constants
+    private let containerPadding: CGFloat = 16
+    private let sectionSpacing: CGFloat = 16
+    private let itemSpacing: CGFloat = 8
 
     var body: some View {
         VStack(spacing: 0) {
-            // Battery display - ultra compact
-            if let keyboard = bluetoothManager.selectedKeyboard,
-               bluetoothManager.connectionState.isConnected {
-                HStack(spacing: 16) {
-                    MinimalBattery(label: "L", percentage: keyboard.leftBattery?.percentage)
-                    MinimalBattery(label: "R", percentage: keyboard.rightBattery?.percentage)
-                }
-                .padding(.vertical, 16)
-            } else {
-                VStack(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Circle()
-                            .fill(bluetoothManager.connectionState.isActive ? theme.warning : theme.foregroundTertiary)
-                            .frame(width: 8, height: 8)
-                        Text(bluetoothManager.connectionState.isBluetoothUnavailable
-                             ? "Bluetooth Unavailable"
-                             : (bluetoothManager.selectedKeyboard?.effectiveName ?? "No Keyboard"))
-                            .font(.system(size: 12))
-                            .foregroundStyle(theme.foregroundSecondary)
-                    }
+            // Header
+            header
+                .padding(.bottom, sectionSpacing)
 
-                    if bluetoothManager.connectionState.isBluetoothUnavailable {
-                        Button {
-                            openBluetoothSettings()
-                        } label: {
-                            Text("Allow Bluetooth")
-                                .font(.system(size: 11, weight: .medium))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(theme.accent)
-                                .foregroundStyle(theme.background)
-                                .cornerRadius(4)
-                        }
-                        .buttonStyle(.plain)
+            // Main content
+            mainContent
+                .padding(.bottom, sectionSpacing)
+
+            // Divider
+            Rectangle()
+                .fill(theme.foreground.opacity(0.08))
+                .frame(height: 1)
+                .padding(.bottom, sectionSpacing)
+
+            // Footer actions
+            footer
+        }
+        .padding(containerPadding)
+        .frame(width: 200)
+        .background(theme.background)
+    }
+
+    // MARK: - Header
+
+    @ViewBuilder
+    private var header: some View {
+        HStack {
+            // Title - plain text, not a pill
+            Text(headerTitle)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(theme.foregroundSecondary)
+                .lineLimit(1)
+
+            Spacer()
+
+            // Ghost button (only when connected)
+            if bluetoothManager.connectionState.isConnected {
+                MinimalGhostButton(icon: "arrow.clockwise", help: "Refresh") {
+                    bluetoothManager.refreshBatteryLevels()
+                }
+            }
+        }
+    }
+
+    private var headerTitle: String {
+        if let keyboard = bluetoothManager.selectedKeyboard,
+           bluetoothManager.connectionState.isConnected {
+            return keyboard.effectiveName
+        } else if bluetoothManager.connectionState.isBluetoothUnavailable {
+            return "Bluetooth Off"
+        } else if bluetoothManager.connectionState.isActive {
+            return "Scanning..."
+        } else if !bluetoothManager.availableKeyboards.isEmpty {
+            return "Select Keyboard"
+        } else {
+            return "No Keyboard"
+        }
+    }
+
+    // MARK: - Main Content
+
+    @ViewBuilder
+    private var mainContent: some View {
+        if let keyboard = bluetoothManager.selectedKeyboard,
+           bluetoothManager.connectionState.isConnected {
+            // Connected: Battery pills
+            HStack {
+                MinimalBatteryPillC(label: "L", percentage: keyboard.leftBattery?.percentage)
+                Spacer()
+                MinimalBatteryPillC(label: "R", percentage: keyboard.rightBattery?.percentage)
+            }
+        } else if bluetoothManager.connectionState.isBluetoothUnavailable {
+            // Bluetooth off: Action button
+            MinimalActionPill(title: "Open Settings", icon: "gear") {
+                openBluetoothSettings()
+            }
+        } else if bluetoothManager.connectionState.isActive {
+            // Scanning: Stop button
+            MinimalActionPill(title: "Stop", icon: "stop.fill", style: .secondary) {
+                bluetoothManager.stopScanning()
+            }
+        } else if !bluetoothManager.availableKeyboards.isEmpty {
+            // Keyboards available: List them
+            VStack(spacing: itemSpacing) {
+                ForEach(bluetoothManager.availableKeyboards) { keyboard in
+                    MinimalKeyboardPill(keyboard: keyboard) {
+                        bluetoothManager.selectKeyboard(keyboard)
                     }
                 }
-                .padding(.vertical, 12)
+            }
+        } else {
+            // Ready: Scan button
+            MinimalActionPill(title: "Scan", icon: "antenna.radiowaves.left.and.right") {
+                bluetoothManager.startScanning()
+            }
+        }
+    }
+
+    // MARK: - Footer
+
+    @ViewBuilder
+    private var footer: some View {
+        HStack(spacing: itemSpacing) {
+            // Left actions (context-dependent)
+            if bluetoothManager.connectionState.isConnected {
+                MinimalSquircleButton(icon: "antenna.radiowaves.left.and.right", help: "Scan") {
+                    bluetoothManager.startScanning()
+                }
+                MinimalSquircleButton(icon: "xmark", help: "Disconnect") {
+                    bluetoothManager.disconnect()
+                }
+            } else if !bluetoothManager.availableKeyboards.isEmpty {
+                MinimalSquircleButton(icon: "antenna.radiowaves.left.and.right", help: "Rescan") {
+                    bluetoothManager.startScanning()
+                }
             }
 
-            Rectangle()
-                .fill(theme.divider)
-                .frame(height: 1)
+            Spacer()
 
-            // Minimal actions
-            MinimalActionsRow(bluetoothManager: bluetoothManager)
+            // Right actions (always present)
+            MinimalSquircleButton(icon: "gear", help: "Settings") {
+                openSettings()
+                NSApp.activate(ignoringOtherApps: true)
+            }
+            MinimalSquircleButton(icon: "power", help: "Quit") {
+                NSApplication.shared.terminate(nil)
+            }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
-        .frame(width: 180)
-        .background(theme.background)
     }
 }
 
-struct MinimalBattery: View {
+// MARK: - Name Pill
+
+struct MinimalNamePill: View {
+    let name: String
+    @Environment(\.colorTheme) var theme
+
+    var body: some View {
+        Text(name)
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(theme.foregroundSecondary)
+            .lineLimit(1)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(theme.foreground.opacity(0.05))
+            .cornerRadius(8)
+    }
+}
+
+// MARK: - Status Badge
+
+struct MinimalStatusBadge: View {
+    let icon: String
+    let text: String
+    let color: Color
+    var animated: Bool = false
+
+    @Environment(\.colorTheme) var theme
+    @State private var isAnimating = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 10))
+                .foregroundStyle(color)
+                .opacity(animated && isAnimating ? 0.5 : 1.0)
+            Text(text)
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(theme.foregroundSecondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(theme.foreground.opacity(0.05))
+        .cornerRadius(8)
+        .onAppear {
+            if animated {
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    isAnimating = true
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Battery Pill Style A (Colored Fill)
+
+struct MinimalBatteryPillA: View {
     let label: String
     let percentage: Int?
     @Environment(\.colorTheme) var theme
 
-    private var color: Color {
+    private var bgColor: Color {
+        guard let pct = percentage else { return theme.foregroundTertiary }
+        return theme.batteryColor(for: pct)
+    }
+
+    private var textColor: Color {
+        // Use dark text on light backgrounds, light text on dark
+        guard let pct = percentage else { return theme.background }
+        return pct > 40 ? Color.black.opacity(0.8) : Color.white
+    }
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 10, weight: .medium))
+            Text(percentage.map { "\($0)%" } ?? "--")
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+        }
+        .foregroundStyle(textColor)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(bgColor)
+        .cornerRadius(12)
+    }
+}
+
+// MARK: - Battery Pill Style B (Colored Text)
+
+struct MinimalBatteryPillB: View {
+    let label: String
+    let percentage: Int?
+    @Environment(\.colorTheme) var theme
+
+    private var textColor: Color {
         guard let pct = percentage else { return theme.foregroundTertiary }
         return theme.batteryColor(for: pct)
     }
@@ -978,48 +1151,138 @@ struct MinimalBattery: View {
     var body: some View {
         HStack(spacing: 4) {
             Text(label)
-                .font(.system(size: 11, weight: .medium))
+                .font(.system(size: 10, weight: .medium))
                 .foregroundStyle(theme.foregroundTertiary)
             Text(percentage.map { "\($0)%" } ?? "--")
-                .font(.system(size: 18, weight: .semibold, design: .rounded))
+                .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .monospacedDigit()
-                .foregroundStyle(color)
+                .foregroundStyle(textColor)
         }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(theme.foreground.opacity(0.08))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(theme.foreground.opacity(0.15), lineWidth: 1)
+        )
+        .cornerRadius(12)
     }
 }
 
-struct MinimalActionsRow: View {
-    @ObservedObject var bluetoothManager: BluetoothManager
-    @Environment(\.openSettings) private var openSettings
+// MARK: - Battery Pill Style C (Mini Bar)
+
+struct MinimalBatteryPillC: View {
+    let label: String
+    let percentage: Int?
+    @Environment(\.colorTheme) var theme
+
+    private var barColor: Color {
+        guard let pct = percentage else { return theme.foregroundTertiary }
+        return theme.batteryColor(for: pct)
+    }
 
     var body: some View {
-        HStack(spacing: 12) {
-            if bluetoothManager.connectionState.isConnected {
-                MinimalIconButton(icon: "arrow.clockwise", help: "Refresh") {
-                    bluetoothManager.refreshBatteryLevels()
+        VStack(spacing: 2) {
+            HStack(spacing: 4) {
+                Text(label)
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(theme.foregroundTertiary)
+                Text(percentage.map { "\($0)%" } ?? "--")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(theme.foreground)
+            }
+
+            // Mini progress bar
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(theme.foreground.opacity(0.1))
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(barColor)
+                        .frame(width: geo.size.width * CGFloat(percentage ?? 0) / 100)
                 }
-            } else {
-                MinimalIconButton(icon: "antenna.radiowaves.left.and.right", help: "Scan") {
-                    bluetoothManager.startScanning()
-                }
             }
-
-            Spacer()
-
-            MinimalIconButton(icon: "gear", help: "Settings") {
-                openSettings()
-                NSApp.activate(ignoringOtherApps: true)
-            }
-
-            MinimalIconButton(icon: "power", help: "Quit") {
-                NSApplication.shared.terminate(nil)
-            }
+            .frame(height: 4)
         }
-        .padding(.vertical, 10)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+        .frame(width: 70)
+        .background(theme.foreground.opacity(0.05))
+        .cornerRadius(10)
     }
 }
 
-struct MinimalIconButton: View {
+// MARK: - Keyboard Pill (Full Width)
+
+struct MinimalKeyboardPill: View {
+    let keyboard: ZMKKeyboard
+    let action: () -> Void
+    @State private var isHovered = false
+    @Environment(\.colorTheme) var theme
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(theme.accent)
+                    .frame(width: 6, height: 6)
+                Text(keyboard.effectiveName)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(theme.foreground)
+                    .lineLimit(1)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(theme.foregroundTertiary)
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(isHovered ? theme.accent.opacity(0.12) : theme.foreground.opacity(0.05))
+            .cornerRadius(10)
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Action Pill
+
+struct MinimalActionPill: View {
+    let title: String
+    let icon: String
+    var style: PillStyle = .primary
+    let action: () -> Void
+    @State private var isHovered = false
+    @Environment(\.colorTheme) var theme
+
+    enum PillStyle {
+        case primary, secondary
+    }
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 10))
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+            }
+            .foregroundStyle(isHovered ? theme.accent : theme.accent.opacity(0.7))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(isHovered ? theme.accent.opacity(0.15) : theme.accent.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Ghost Button (minimal, no background)
+
+struct MinimalGhostButton: View {
     let icon: String
     let help: String
     let action: () -> Void
@@ -1029,15 +1292,81 @@ struct MinimalIconButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 12))
-                .foregroundStyle(isHovered ? theme.foreground : theme.foregroundSecondary)
-                .padding(6)
-                .background(isHovered ? theme.foreground.opacity(0.1) : Color.clear)
-                .cornerRadius(6)
+                .font(.system(size: 11))
+                .foregroundStyle(isHovered ? theme.foreground : theme.foregroundTertiary)
         }
         .buttonStyle(.plain)
+        .focusable(false)
         .onHover { isHovered = $0 }
         .help(help)
+    }
+}
+
+// MARK: - Squircle Button (footer actions)
+
+struct MinimalSquircleButton: View {
+    let icon: String
+    let help: String
+    let action: () -> Void
+    @State private var isHovered = false
+    @Environment(\.colorTheme) var theme
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundStyle(isHovered ? theme.foreground : theme.foregroundSecondary)
+                .frame(width: 28, height: 28)
+                .background(isHovered ? theme.foreground.opacity(0.1) : theme.foreground.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        }
+        .buttonStyle(.plain)
+        .focusable(false)
+        .onHover { isHovered = $0 }
+        .help(help)
+    }
+}
+
+// MARK: - Flow Layout (for wrapping keyboard pills)
+
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = layout(proposal: proposal, subviews: subviews)
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = layout(proposal: proposal, subviews: subviews)
+        for (index, frame) in result.frames.enumerated() {
+            subviews[index].place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY), proposal: .unspecified)
+        }
+    }
+
+    private func layout(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, frames: [CGRect]) {
+        let maxWidth = proposal.width ?? .infinity
+        var frames: [CGRect] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var rowHeight: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+
+            if x + size.width > maxWidth && x > 0 {
+                x = 0
+                y += rowHeight + spacing
+                rowHeight = 0
+            }
+
+            frames.append(CGRect(origin: CGPoint(x: x, y: y), size: size))
+            rowHeight = max(rowHeight, size.height)
+            x += size.width + spacing
+        }
+
+        let totalHeight = y + rowHeight
+        return (CGSize(width: maxWidth, height: totalHeight), frames)
     }
 }
 
@@ -1167,6 +1496,7 @@ struct TUIActionsSection: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
+            // Connection actions
             if bluetoothManager.connectionState.isConnected {
                 TUIMenuItem(label: "refresh", color: theme.accent) {
                     bluetoothManager.refreshBatteryLevels()
@@ -1179,6 +1509,27 @@ struct TUIActionsSection: View {
                     bluetoothManager.startScanning()
                 }
             }
+
+            TUIDivider()
+
+            // Available keyboards section (when disconnected)
+            if !bluetoothManager.connectionState.isConnected && !bluetoothManager.availableKeyboards.isEmpty {
+                Text("devices")
+                    .font(.system(size: 10, design: .monospaced))
+                    .foregroundStyle(theme.foregroundTertiary)
+                    .padding(.horizontal, 4)
+                    .padding(.top, 2)
+
+                ForEach(bluetoothManager.availableKeyboards) { keyboard in
+                    TUIKeyboardRow(keyboard: keyboard) {
+                        bluetoothManager.selectKeyboard(keyboard)
+                    }
+                }
+
+                TUIDivider()
+            }
+
+            // System actions (always at bottom)
             TUIMenuItem(label: "settings", color: theme.foregroundSecondary) {
                 openSettings()
                 NSApp.activate(ignoringOtherApps: true)
@@ -1187,6 +1538,35 @@ struct TUIActionsSection: View {
                 NSApplication.shared.terminate(nil)
             }
         }
+    }
+}
+
+// MARK: - TUI Keyboard Row
+
+struct TUIKeyboardRow: View {
+    let keyboard: ZMKKeyboard
+    let action: () -> Void
+    @State private var isHovered = false
+    @Environment(\.colorTheme) var theme
+
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(">")
+                    .foregroundStyle(theme.success)
+                Text(keyboard.effectiveName)
+                    .foregroundStyle(isHovered ? theme.foreground : theme.accent)
+                Spacer()
+            }
+            .font(.system(size: 11, design: .monospaced))
+            .padding(.vertical, 2)
+            .padding(.horizontal, 4)
+            .background(isHovered ? theme.backgroundSecondary : Color.clear)
+            .cornerRadius(4)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { isHovered = $0 }
     }
 }
 

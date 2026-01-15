@@ -1,6 +1,6 @@
 # bat-mon
 
-**ZMK Keyboard Battery Monitor for macOS**
+> ZMK Keyboard Battery Monitor for macOS
 
 ---
 
@@ -125,7 +125,7 @@ First-run experience:
 
 | | |
 |---|---|
-| **Platform** | macOS 12.0+ (Monterey and later) |
+| **Platform** | macOS 14.0+ (Sonoma and later) |
 | **Language** | Swift 5.9+ |
 | **UI Framework** | SwiftUI for menu bar and settings |
 | **Bluetooth** | CoreBluetooth framework for BLE communication |
@@ -181,5 +181,3 @@ bat-mon will be distributed through multiple channels to serve different user pr
 | App Store distribution complexities | Focus on GitHub/Homebrew; consider App Store later |
 
 ---
-
-*— End of Document —*

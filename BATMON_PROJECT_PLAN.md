@@ -8,7 +8,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
 1. [Project Overview](#project-overview)
 2. [Problem Statement](#problem-statement)
@@ -26,7 +26,7 @@
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 ### What is BatMon?
 
@@ -50,7 +50,7 @@ BatMon is a native macOS menu bar application that displays real-time battery le
 
 ---
 
-## 💡 Problem Statement
+## Problem Statement
 
 ### Current Pain Points (from Mighty Mitts)
 
@@ -102,7 +102,7 @@ BatMon is a native macOS menu bar application that displays real-time battery le
 
 ---
 
-## 🎯 Core Requirements
+## Core Requirements
 
 ### Must-Have (Phase 1 - MVP)
 
@@ -128,11 +128,11 @@ BatMon is a native macOS menu bar application that displays real-time battery le
 
 ---
 
-## 🏗️ Technical Architecture
+## Technical Architecture
 
 ### Technology Stack
 
-```
+```text
 Swift 5.9+
 ├── SwiftUI              # UI framework
 ├── Combine              # Reactive data flow
@@ -192,9 +192,9 @@ Swift 5.9+
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
-```
+```text
 BatMon/
 ├── BatMon.xcodeproj
 ├── BatMon/
@@ -278,7 +278,7 @@ BatMon/
 
 ---
 
-## 📊 Data Models
+## Data Models
 
 ### 1. ZMKKeyboard.swift
 
@@ -527,7 +527,7 @@ enum ConnectionState: Equatable {
 
 ---
 
-## 🔧 Core Managers
+## Core Managers
 
 ### 1. BluetoothManager.swift
 
@@ -755,6 +755,7 @@ class PreferencesManager: ObservableObject {
     private enum Keys {
         static let appSettings = "appSettings"
         static let selectedKeyboardID = "selectedKeyboardID"
+        static let selectedKeyboardData = "selectedKeyboardData"
         static let savedKeyboards = "savedKeyboards"
         static let hasCompletedSetup = "hasCompletedSetup"
     }
@@ -788,7 +789,7 @@ func saveKeyboard(_ keyboard: ZMKKeyboard) {
     do {
         let encoder = JSONEncoder()
         let data = try encoder.encode(keyboard)
-        defaults.set(data, forKey: Keys.selectedKeyboardID)
+        defaults.set(data, forKey: Keys.selectedKeyboardData)
         defaults.set(keyboard.id.uuidString, forKey: Keys.selectedKeyboardID)
         Logger.shared.info("Saved keyboard: \(keyboard.name)")
     } catch {
@@ -797,7 +798,7 @@ func saveKeyboard(_ keyboard: ZMKKeyboard) {
 }
 
 func loadLastSelectedKeyboard() -> ZMKKeyboard? {
-    guard let data = defaults.data(forKey: Keys.selectedKeyboardID) else {
+    guard let data = defaults.data(forKey: Keys.selectedKeyboardData) else {
         return nil
     }
     
@@ -898,7 +899,7 @@ private func markNotificationSent(identifier: String) {
 
 ---
 
-## 🎨 UI/UX Design
+## UI/UX Design
 
 ### Menu Bar Display Customization
 
@@ -1124,7 +1125,7 @@ Users can customize the menu bar display through settings:
 
 ---
 
-## 🚀 Feature Roadmap
+## Feature Roadmap
 
 ### Phase 1: MVP (Week 1) - Core Functionality
 
@@ -1284,7 +1285,7 @@ Users can customize the menu bar display through settings:
 
 ---
 
-## 📅 Development Plan
+## Development Plan
 
 ### Milestones
 
@@ -1332,7 +1333,7 @@ Users can customize the menu bar display through settings:
 
 ---
 
-## 🧪 Testing Strategy
+## Testing Strategy
 
 ### Unit Tests
 
@@ -1446,7 +1447,7 @@ Users can customize the menu bar display through settings:
 
 ---
 
-## 📦 Distribution
+## Distribution
 
 ### Build Configuration
 
@@ -1581,7 +1582,7 @@ end
 
 ---
 
-## 🔮 Future Considerations
+## Future Considerations
 
 ### macOS Widget (WidgetKit)
 
@@ -1864,7 +1865,7 @@ BatMon MVP will be considered successful when:
 
 ---
 
-## 🎯 Next Steps
+## Next Steps
 
 ### Immediate Actions
 
