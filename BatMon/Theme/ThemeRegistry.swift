@@ -31,7 +31,8 @@ class ThemeRegistry: ObservableObject {
     // MARK: - Initialization
 
     private init() {
-        reloadCustomThemes()
+        // Ensure themes.json exists and load themes before starting the watcher
+        initializeDefaultThemesIfNeeded()
         CustomThemeLoader.shared.startWatching { [weak self] in
             self?.reloadCustomThemes()
         }
