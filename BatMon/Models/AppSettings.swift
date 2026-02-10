@@ -21,9 +21,11 @@ struct AppSettings: Codable, Equatable {
     var customCompactIcon: String = "star.fill"
 
     // Disconnected icon customization
-    var disconnectedIconFillHex: String = "#FFFFFF"  // White fill (for dark menu bar)
-    var disconnectedIconBorderEnabled: Bool = false
-    var disconnectedIconBorderHex: String = "#FF0000"  // Red border
+    var disconnectedIconFillHex: String = "#000000"  // Classic bat silhouette
+    var disconnectedIconBorderEnabled: Bool = true
+    var disconnectedIconBorderHex: String = "#FF0000"  // Red outline for visibility
+    // nil means migrated from older settings; treat as true to keep theme-link as default
+    var useThemeDisconnectedIconColors: Bool? = true
 
     // Experimental display
     var useExperimentalFormat: Bool = false

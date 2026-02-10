@@ -15,7 +15,8 @@ class CustomThemeLoader {
     /// Path to the config directory
     /// Uses Application Support for sandboxed apps
     private var configDirectory: URL {
-        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+        let appSupport = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
         return appSupport.appendingPathComponent("BatMon")
     }
 

@@ -53,10 +53,10 @@ struct GeneralSettingsView: View {
         Form {
             Section {
                 Toggle("Launch at Login", isOn: launchAtLoginBinding)
-                Toggle("Auto-reconnect to keyboard", isOn: $preferencesManager.settings.autoReconnect)
+                Toggle("Auto-reconnect after disconnect", isOn: $preferencesManager.settings.autoReconnect)
             }
 
-            Section("Battery Check Interval") {
+            Section("Battery Update Interval") {
                 Slider(
                     value: $preferencesManager.settings.pollingInterval,
                     in: AppConstants.minPollingInterval...AppConstants.maxPollingInterval,
@@ -69,19 +69,19 @@ struct GeneralSettingsView: View {
                     Text("5m")
                 }
 
-                Text("Check every \(Int(preferencesManager.settings.pollingInterval)) seconds")
+                Text("Update every \(Int(preferencesManager.settings.pollingInterval)) seconds")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             Section {
                 Stepper(
-                    "Max reconnect attempts: \(preferencesManager.settings.maxReconnectAttempts)",
+                    "Reconnect attempts before failure: \(preferencesManager.settings.maxReconnectAttempts)",
                     value: $preferencesManager.settings.maxReconnectAttempts,
                     in: 1...20
                 )
 
-                Toggle("Enable debug logging", isOn: $preferencesManager.settings.enableDebugLogging)
+                Toggle("Enable debug logging (troubleshooting)", isOn: $preferencesManager.settings.enableDebugLogging)
             }
 
             Section {
@@ -773,7 +773,38 @@ struct ThemeEditorSheet: View {
 
 struct DisplaySettingsView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager
+    @ObservedObject private var themeRegistry = ThemeRegistry.shared
     @State private var showingIconPicker = false
+
+    private var currentTheme: any ColorTheme {
+        themeRegistry.theme(for: preferencesManager.settings.colorThemeId)
+    }
+
+    private var usesThemeDisconnectedIconColors: Bool {
+        preferencesManager.settings.useThemeDisconnectedIconColors ?? true
+    }
+
+    private var useThemeDisconnectedIconBinding: Binding<Bool> {
+        Binding(
+            get: { usesThemeDisconnectedIconColors },
+            set: { preferencesManager.settings.useThemeDisconnectedIconColors = $0 }
+        )
+    }
+
+    private var disconnectedFillColor: Color {
+        if usesThemeDisconnectedIconColors {
+            return currentTheme.accent
+        }
+        return Color(hex: preferencesManager.settings.disconnectedIconFillHex)
+    }
+
+    private var disconnectedBorderColor: Color? {
+        guard preferencesManager.settings.disconnectedIconBorderEnabled else { return nil }
+        if usesThemeDisconnectedIconColors {
+            return currentTheme.foreground
+        }
+        return Color(hex: preferencesManager.settings.disconnectedIconBorderHex)
+    }
 
     private var previewText: String? {
         let settings = preferencesManager.settings
@@ -1005,10 +1036,8 @@ struct DisplaySettingsView: View {
                 HStack {
                     Spacer()
                     BatIconView(
-                        fillColor: Color(hex: preferencesManager.settings.disconnectedIconFillHex),
-                        borderColor: preferencesManager.settings.disconnectedIconBorderEnabled
-                            ? Color(hex: preferencesManager.settings.disconnectedIconBorderHex)
-                            : nil
+                        fillColor: disconnectedFillColor,
+                        borderColor: disconnectedBorderColor
                     )
                     .scaleEffect(2.0)
                     .frame(width: 50, height: 35)
@@ -1018,19 +1047,27 @@ struct DisplaySettingsView: View {
                 .background(Color.black.opacity(0.8))
                 .cornerRadius(6)
 
-                // Fill color picker
-                ColorPicker(
-                    "Icon Color",
-                    selection: Binding(
-                        get: { Color(hex: preferencesManager.settings.disconnectedIconFillHex) },
-                        set: { preferencesManager.settings.disconnectedIconFillHex = $0.toHex() }
+                Toggle("Follow selected color theme", isOn: useThemeDisconnectedIconBinding)
+
+                if usesThemeDisconnectedIconColors {
+                    Text("Using \"\(currentTheme.name)\" accent color for fill and text color for border.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    // Fill color picker
+                    ColorPicker(
+                        "Icon Color",
+                        selection: Binding(
+                            get: { Color(hex: preferencesManager.settings.disconnectedIconFillHex) },
+                            set: { preferencesManager.settings.disconnectedIconFillHex = $0.toHex() }
+                        )
                     )
-                )
+                }
 
                 // Border toggle and color
                 Toggle("Show Border", isOn: $preferencesManager.settings.disconnectedIconBorderEnabled)
 
-                if preferencesManager.settings.disconnectedIconBorderEnabled {
+                if preferencesManager.settings.disconnectedIconBorderEnabled && !usesThemeDisconnectedIconColors {
                     ColorPicker(
                         "Border Color",
                         selection: Binding(
@@ -1063,7 +1100,7 @@ struct NotificationSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Enable battery notifications", isOn: $preferencesManager.settings.enableNotifications)
+                Toggle("Enable battery alerts", isOn: $preferencesManager.settings.enableNotifications)
             }
 
             Section("Alert Thresholds") {
@@ -1110,7 +1147,6 @@ struct NotificationSettingsView: View {
 
 struct KeyboardsSettingsView: View {
     @EnvironmentObject var bluetoothManager: BluetoothManager
-    @EnvironmentObject var preferencesManager: PreferencesManager
 
     var body: some View {
         Form {
@@ -1134,8 +1170,7 @@ struct KeyboardsSettingsView: View {
                     }
 
                     Button("Forget Keyboard") {
-                        preferencesManager.clearSelectedKeyboard()
-                        bluetoothManager.disconnect()
+                        bluetoothManager.forgetSelectedKeyboard()
                     }
                 } else {
                     Text("No keyboard selected")
@@ -1199,8 +1234,10 @@ struct AboutView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            Link("View on GitHub", destination: URL(string: AppInfo.githubURL)!)
-                .font(.caption)
+            if let githubURL = URL(string: AppInfo.githubURL) {
+                Link("View on GitHub", destination: githubURL)
+                    .font(.caption)
+            }
 
             Spacer()
 

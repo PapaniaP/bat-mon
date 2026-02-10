@@ -6,7 +6,7 @@ struct BatIconView: View {
     let borderColor: Color?
     let borderWidth: CGFloat
 
-    init(fillColor: Color, borderColor: Color? = nil, borderWidth: CGFloat = 1) {
+    init(fillColor: Color, borderColor: Color? = nil, borderWidth: CGFloat = 0.7) {
         self.fillColor = fillColor
         self.borderColor = borderColor
         self.borderWidth = borderWidth

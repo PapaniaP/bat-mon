@@ -19,7 +19,9 @@ struct BatMonApp: App {
                 .environmentObject(preferencesManager)
         } label: {
             MenuBarLabel(bluetoothManager: bluetoothManager, preferencesManager: preferencesManager)
-                .id("menubar-\(preferencesManager.settings.displayFormat.rawValue)-\(preferencesManager.settings.compactMode)-\(preferencesManager.settings.useExperimentalFormat)-\(preferencesManager.settings.experimentalFormat.rawValue)")
+                .id(
+                    "menubar-\(preferencesManager.settings.displayFormat.rawValue)-\(preferencesManager.settings.compactMode)-\(preferencesManager.settings.compactIcon.rawValue)-\(preferencesManager.settings.customCompactIcon)-\(preferencesManager.settings.useExperimentalFormat)-\(preferencesManager.settings.experimentalFormat.rawValue)-\(preferencesManager.settings.colorThemeId)-\(preferencesManager.settings.useThemeDisconnectedIconColors ?? true)-\(preferencesManager.settings.disconnectedIconFillHex)-\(preferencesManager.settings.disconnectedIconBorderEnabled)-\(preferencesManager.settings.disconnectedIconBorderHex)"
+                )
         }
         .menuBarExtraStyle(.window)
 
@@ -36,6 +38,12 @@ struct MenuBarLabel: View {
     @ObservedObject var preferencesManager: PreferencesManager
 
     private var settings: AppSettings { preferencesManager.settings }
+    private var currentTheme: any ColorTheme {
+        ThemeRegistry.shared.theme(for: settings.colorThemeId)
+    }
+    private var usesThemeDisconnectedIconColors: Bool {
+        settings.useThemeDisconnectedIconColors ?? true
+    }
 
     var body: some View {
         if settings.compactMode {
@@ -61,9 +69,20 @@ struct MenuBarLabel: View {
     }
 
     private func renderBatIcon() -> NSImage? {
+        let fillColor: Color
+        let borderColor: Color?
+
+        if usesThemeDisconnectedIconColors {
+            fillColor = currentTheme.accent
+            borderColor = settings.disconnectedIconBorderEnabled ? currentTheme.foreground : nil
+        } else {
+            fillColor = Color(hex: settings.disconnectedIconFillHex)
+            borderColor = settings.disconnectedIconBorderEnabled ? Color(hex: settings.disconnectedIconBorderHex) : nil
+        }
+
         let batView = BatIconView(
-            fillColor: Color(hex: settings.disconnectedIconFillHex),
-            borderColor: settings.disconnectedIconBorderEnabled ? Color(hex: settings.disconnectedIconBorderHex) : nil
+            fillColor: fillColor,
+            borderColor: borderColor
         )
 
         let renderer = ImageRenderer(content: batView)

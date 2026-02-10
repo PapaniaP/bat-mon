@@ -254,10 +254,25 @@ CONFIG_ZMK_SPLIT_BLE_CENTRAL_BATTERY_LEVEL_PROXY=y
 2. Ensure all 6 required color fields are present
 3. Click the warning icon in Settings to see which fields are missing
 
+### Left and right battery look swapped
+
+On some ZMK setups, BLE characteristic ordering may not match the physical keyboard side.
+Battery percentages are still valid, but labels can appear reversed.
+
 ## Related Projects
 
 - [Mighty-Mitts](https://github.com/codyd51/Mighty-Mitts) - macOS menu bar app for ZMK battery levels (Objective-C)
 - [zmk-battery-center](https://github.com/kot149/zmk-battery-center) - Cross-platform system tray app (Tauri/Rust)
+
+## Beta QA Checklist
+
+Before publishing a beta build, verify:
+
+1. Fresh launch: app starts in menu bar and can scan/connect to a keyboard.
+2. Reconnect path: keyboard reconnects after turning Bluetooth off/on.
+3. Sleep/wake path: keyboard reconnects after Mac sleep and wake.
+4. Forget path: "Forget Keyboard" clears selection and app does not auto-reconnect to the forgotten device.
+5. Notifications: test notification works and low battery alerts trigger at configured thresholds.
 
 ## License
 

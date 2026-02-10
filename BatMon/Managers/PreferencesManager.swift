@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import os.log
+import WidgetKit
 
 class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
@@ -13,7 +14,7 @@ class PreferencesManager: ObservableObject {
 
     @Published var hasCompletedSetup: Bool
 
-    private let defaults = UserDefaults.standard
+    private let defaults = UserDefaults(suiteName: AppInfo.appGroupIdentifier) ?? .standard
     private let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "Preferences")
 
     private init() {
@@ -39,6 +40,12 @@ class PreferencesManager: ObservableObject {
         do {
             let data = try JSONEncoder().encode(settings)
             defaults.set(data, forKey: UserDefaultsKeys.appSettings)
+
+            // Sync theme to widget
+            defaults.set(settings.colorThemeId, forKey: UserDefaultsKeys.widgetThemeId)
+            defaults.set(settings.menuLayout.rawValue, forKey: UserDefaultsKeys.widgetMenuLayout)
+            WidgetCenter.shared.reloadAllTimelines()
+
             logger.info("Settings saved")
         } catch {
             logger.error("Failed to save settings: \(error.localizedDescription)")
