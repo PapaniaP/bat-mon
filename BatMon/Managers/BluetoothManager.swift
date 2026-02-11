@@ -123,7 +123,7 @@ class BluetoothManager: NSObject, ObservableObject {
         } else {
             logger.info("Using connected devices only; active scan not needed")
             isScanning = false
-            connectionState = .disconnected
+            connectionState = .idle
         }
     }
 
@@ -137,7 +137,7 @@ class BluetoothManager: NSObject, ObservableObject {
         scanTimer = nil
 
         if connectionState == .searching {
-            connectionState = .disconnected
+            connectionState = availableKeyboards.isEmpty ? .disconnected : .idle
         }
     }
 

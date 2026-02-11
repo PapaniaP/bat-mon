@@ -614,18 +614,33 @@ struct ThemeEditorSheet: View {
     @ObservedObject var preferencesManager: PreferencesManager
     @Environment(\.dismiss) private var dismiss
 
-    @State private var themeName: String = ""
-    @State private var backgroundColor: Color = Color(hex: "#1a1b26")
-    @State private var textColor: Color = Color(hex: "#c0caf5")
-    @State private var accentColor: Color = Color(hex: "#7aa2f7")
-    @State private var healthyColor: Color = Color(hex: "#9ece6a")
-    @State private var warningColor: Color = Color(hex: "#e0af68")
-    @State private var alertColor: Color = Color(hex: "#f7768e")
+    @State private var themeName: String
+    @State private var backgroundColor: Color
+    @State private var textColor: Color
+    @State private var accentColor: Color
+    @State private var healthyColor: Color
+    @State private var warningColor: Color
+    @State private var alertColor: Color
 
     @State private var showingDeleteConfirmation = false
     @State private var errorMessage: String?
 
     private var isEditing: Bool { editingTheme != nil }
+
+    init(editingTheme: ConfigurableTheme?, themeRegistry: ThemeRegistry, preferencesManager: PreferencesManager) {
+        self.editingTheme = editingTheme
+        self.themeRegistry = themeRegistry
+        self.preferencesManager = preferencesManager
+
+        let seedTheme: any ColorTheme = editingTheme ?? themeRegistry.theme(for: preferencesManager.settings.colorThemeId)
+        self._themeName = State(initialValue: editingTheme?.name ?? "")
+        self._backgroundColor = State(initialValue: seedTheme.background)
+        self._textColor = State(initialValue: seedTheme.foreground)
+        self._accentColor = State(initialValue: seedTheme.accent)
+        self._healthyColor = State(initialValue: seedTheme.success)
+        self._warningColor = State(initialValue: seedTheme.warning)
+        self._alertColor = State(initialValue: seedTheme.error)
+    }
 
     private var previewTheme: ConfigurableTheme {
         ConfigurableTheme(
@@ -705,17 +720,6 @@ struct ThemeEditorSheet: View {
             .formStyle(.grouped)
         }
         .frame(width: 400, height: 550)
-        .onAppear {
-            if let theme = editingTheme {
-                themeName = theme.name
-                backgroundColor = theme.background
-                textColor = theme.foreground
-                accentColor = theme.accent
-                healthyColor = theme.success
-                warningColor = theme.warning
-                alertColor = theme.error
-            }
-        }
         .alert("Delete Theme?", isPresented: $showingDeleteConfirmation) {
             Button("Cancel", role: .cancel) { }
             Button("Delete", role: .destructive) {

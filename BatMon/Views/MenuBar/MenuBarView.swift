@@ -199,7 +199,7 @@ struct NativeStatusIndicator: View {
         switch state {
         case .connected: return theme.success
         case .searching, .connecting, .reconnecting: return theme.warning
-        case .disconnected: return theme.foregroundTertiary
+        case .disconnected, .idle: return theme.foregroundTertiary
         case .failed: return theme.error
         }
     }
@@ -618,7 +618,7 @@ struct RichStatusBadge: View {
         switch state {
         case .connected: return theme.success
         case .searching, .connecting, .reconnecting: return theme.warning
-        case .disconnected: return theme.foregroundTertiary
+        case .disconnected, .idle: return theme.foregroundTertiary
         case .failed: return theme.error
         }
     }
@@ -626,6 +626,7 @@ struct RichStatusBadge: View {
     private var text: String {
         switch state {
         case .connected: return "Connected"
+        case .idle: return "Ready"
         case .searching: return "Searching"
         case .connecting: return "Connecting"
         case .reconnecting: return "Reconnecting"
@@ -1415,7 +1416,11 @@ struct TUIMenuBarView: View {
                         .foregroundStyle(theme.foreground)
                     Spacer()
                     Text(bluetoothManager.connectionState.isActive ? "◐" : "○")
-                        .foregroundStyle(bluetoothManager.connectionState.isActive ? theme.warning : theme.error)
+                        .foregroundStyle(
+                            bluetoothManager.connectionState == .idle
+                                ? theme.foregroundTertiary
+                                : (bluetoothManager.connectionState.isActive ? theme.warning : theme.error)
+                        )
                 }
 
                 if bluetoothManager.connectionState.isBluetoothUnavailable {

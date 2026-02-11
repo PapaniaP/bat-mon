@@ -58,7 +58,7 @@ struct ConfigurableTheme: ColorTheme {
     }
 
     var divider: Color {
-        _divider ?? foregroundTertiary.opacity(0.3)
+        _divider ?? _foreground.opacity(0.12)
     }
 
     // MARK: - Initialization from JSON

@@ -2,6 +2,7 @@ import Foundation
 
 enum ConnectionState: Equatable {
     case disconnected
+    case idle
     case searching
     case connecting
     case connected
@@ -11,6 +12,7 @@ enum ConnectionState: Equatable {
     var displayText: String {
         switch self {
         case .disconnected: return "Disconnected"
+        case .idle: return "Ready to Connect"
         case .searching: return "Searching..."
         case .connecting: return "Connecting..."
         case .connected: return "Connected"
@@ -45,6 +47,7 @@ enum ConnectionState: Equatable {
     static func == (lhs: ConnectionState, rhs: ConnectionState) -> Bool {
         switch (lhs, rhs) {
         case (.disconnected, .disconnected): return true
+        case (.idle, .idle): return true
         case (.searching, .searching): return true
         case (.connecting, .connecting): return true
         case (.connected, .connected): return true
