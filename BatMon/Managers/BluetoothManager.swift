@@ -2,7 +2,6 @@ import Foundation
 import CoreBluetooth
 import Combine
 import os.log
-import WidgetKit
 
 class BluetoothManager: NSObject, ObservableObject {
     // MARK: - Published Properties
@@ -26,7 +25,6 @@ class BluetoothManager: NSObject, ObservableObject {
     private var cancellables = Set<AnyCancellable>()
 
     private let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "Bluetooth")
-    private let sharedDefaults = UserDefaults(suiteName: AppInfo.appGroupIdentifier)
 
     // MARK: - Reconnection
 
@@ -39,15 +37,6 @@ class BluetoothManager: NSObject, ObservableObject {
     override init() {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
-
-        if sharedDefaults == nil {
-            logger.error(
-                "App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier, privacy: .public)'. Widget sync will be disabled; check entitlements and App Group configuration."
-            )
-            #if DEBUG
-            assertionFailure("App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier)'. Check entitlements/App Group configuration.")
-            #endif
-        }
 
         // Listen for system wake to trigger reconnection
         NotificationCenter.default.addObserver(
@@ -171,7 +160,6 @@ class BluetoothManager: NSObject, ObservableObject {
         centralManager.cancelPeripheralConnection(peripheral)
         stopPolling()
         stopReconnecting()
-        updateWidgetData()
     }
 
     func reconnect() {
@@ -231,7 +219,6 @@ class BluetoothManager: NSObject, ObservableObject {
         connectionState = .disconnected
 
         PreferencesManager.shared.clearSelectedKeyboard()
-        updateWidgetData()
     }
 
     // MARK: - Polling
@@ -444,7 +431,6 @@ extension BluetoothManager: CBCentralManagerDelegate {
             cacheKeyboardForQuickReconnect(keyboard: keyboard, peripheral: peripheral)
         }
         saveSelectedKeyboard()
-        updateWidgetData()
 
         // Auto-reconnect if unexpected disconnect
         if error != nil {
@@ -546,7 +532,6 @@ extension BluetoothManager: CBPeripheralDelegate {
                 keyboard.rightBattery = batteryLevel
             }
             selectedKeyboard = keyboard  // Reassign to trigger @Published update
-            updateWidgetData()
         }
 
         // Check for low battery notifications
@@ -574,35 +559,4 @@ extension BluetoothManager: CBPeripheralDelegate {
         }
     }
 
-    // MARK: - Widget Updates
-
-    /// Updates shared storage with current battery data and notifies widgets to refresh
-    func updateWidgetData() {
-        guard let defaults = sharedDefaults else {
-            logger.error(
-                "Skipping widget update: App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier, privacy: .public)'."
-            )
-            return
-        }
-
-        guard let keyboard = selectedKeyboard else {
-            // Clear widget data when disconnected
-            defaults.removeObject(forKey: UserDefaultsKeys.widgetKeyboardName)
-            defaults.removeObject(forKey: UserDefaultsKeys.widgetLeftBattery)
-            defaults.removeObject(forKey: UserDefaultsKeys.widgetRightBattery)
-            defaults.set(false, forKey: UserDefaultsKeys.widgetIsConnected)
-            defaults.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
-            WidgetCenter.shared.reloadAllTimelines()
-            return
-        }
-
-        defaults.set(keyboard.effectiveName, forKey: UserDefaultsKeys.widgetKeyboardName)
-        defaults.set(keyboard.leftBattery?.percentage, forKey: UserDefaultsKeys.widgetLeftBattery)
-        defaults.set(keyboard.rightBattery?.percentage, forKey: UserDefaultsKeys.widgetRightBattery)
-        defaults.set(connectionState.isConnected, forKey: UserDefaultsKeys.widgetIsConnected)
-        defaults.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
-
-        WidgetCenter.shared.reloadAllTimelines()
-        logger.debug("Widget data updated")
-    }
 }
