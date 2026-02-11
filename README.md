@@ -5,7 +5,7 @@ A reliable macOS menu bar app for monitoring ZMK keyboard battery levels.
 macOS's native Bluetooth UI only shows the battery level of one keyboard half. bat-mon shows both halves and automatically reconnects after sleep/wake cycles and system restarts.
 
 [![GitHub release](https://img.shields.io/github/v/release/PapaniaP/bat-mon?include_prereleases&label=release)](https://github.com/PapaniaP/bat-mon/releases)
-[![License: MIT](https://img.shields.io/github/license/PapaniaP/bat-mon)](https://github.com/PapaniaP/bat-mon/blob/main/LICENSE)
+[![License: MIT](https://img.shields.io/github/license/PapaniaP/bat-mon)](https://github.com/PapaniaP/bat-mon/blob/master/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/PapaniaP/bat-mon?style=social)](https://github.com/PapaniaP/bat-mon/stargazers)
 
 [![macOS 14+](https://img.shields.io/badge/macOS-14%2B-007ACC?logo=apple&logoColor=white)](https://github.com/PapaniaP/bat-mon)

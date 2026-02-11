@@ -167,7 +167,7 @@ struct AppearanceSettingsView: View {
                         }
 
                         if !preferencesManager.settings.menuLayout.usesFullThemePalette {
-                            Text("(affects battery & status colors)")
+                            Text("(applies key colors; TUI uses the full palette)")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -735,6 +735,7 @@ struct ThemeEditorSheet: View {
 
         let newTheme = ConfigurableTheme(
             name: trimmedName,
+            id: editingTheme?.id,
             background: backgroundColor,
             foreground: textColor,
             accent: accentColor,
@@ -757,11 +758,10 @@ struct ThemeEditorSheet: View {
         guard let theme = editingTheme else { return }
 
         do {
-            // If this theme is selected, switch to System first
+            try themeRegistry.removeCustomTheme(withId: theme.id)
             if preferencesManager.settings.colorThemeId == theme.id {
                 preferencesManager.settings.colorThemeId = "system"
             }
-            try themeRegistry.removeCustomTheme(withId: theme.id)
             dismiss()
         } catch {
             errorMessage = "Failed to delete theme: \(error.localizedDescription)"

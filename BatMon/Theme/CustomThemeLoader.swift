@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 import os.log
 
-/// Handles loading, saving, and managing custom themes from ~/.config/bat-mon/themes.json
+/// Handles loading, saving, and managing custom themes from the user's Application Support directory.
 class CustomThemeLoader {
     static let shared = CustomThemeLoader()
 
@@ -97,8 +97,14 @@ class CustomThemeLoader {
 
     /// Helper to get theme ID from raw JSON
     private func themeId(from json: [String: Any]) -> String? {
+        if let id = json["id"] as? String {
+            let trimmed = id.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty {
+                return trimmed
+            }
+        }
         guard let name = json["name"] as? String else { return nil }
-        return name.lowercased().replacingOccurrences(of: " ", with: "_")
+        return ConfigurableTheme.normalizedId(from: name)
     }
 
     /// Add a new theme to the config file (preserves invalid themes)
@@ -159,6 +165,10 @@ class CustomThemeLoader {
     func startWatching(onChange: @escaping () -> Void) {
         stopWatching()
 
+        if !themesFileExists() {
+            initializeDefaultThemesIfNeeded()
+        }
+
         let path = themesFilePath.path
         fileDescriptor = open(path, O_EVTONLY)
         guard fileDescriptor >= 0 else {
@@ -172,8 +182,19 @@ class CustomThemeLoader {
             queue: .main
         )
 
-        dispatchSource?.setEventHandler {
+        dispatchSource?.setEventHandler { [weak self] in
+            guard let self else { return }
+            let events = self.dispatchSource?.data ?? []
             onChange()
+
+            // Atomic writes replace the file and invalidate the old file descriptor.
+            if events.contains(.delete) || events.contains(.rename) {
+                self.logger.info("themes.json watcher invalidated; restarting")
+                self.stopWatching()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+                    self?.startWatching(onChange: onChange)
+                }
+            }
         }
 
         dispatchSource?.setCancelHandler { [weak self] in

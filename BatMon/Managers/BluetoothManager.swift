@@ -208,6 +208,7 @@ class BluetoothManager: NSObject, ObservableObject {
 
         stopScanning()
         stopReconnecting()
+        stopPolling()
 
         if let peripheral = connectedPeripheral {
             centralManager.cancelPeripheralConnection(peripheral)

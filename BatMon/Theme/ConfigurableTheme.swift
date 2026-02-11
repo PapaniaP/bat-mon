@@ -66,6 +66,10 @@ struct ConfigurableTheme: ColorTheme {
     /// Required color keys for a valid theme
     static let requiredColorKeys = ["background", "text", "accent", "healthy", "warning", "alert"]
 
+    static func normalizedId(from name: String) -> String {
+        name.lowercased().replacingOccurrences(of: " ", with: "_")
+    }
+
     /// Validate JSON and return either a valid ConfigurableTheme or an InvalidTheme
     static func parse(from json: [String: Any]) -> Result<ConfigurableTheme, InvalidTheme> {
         guard let name = json["name"] as? String else {
@@ -76,7 +80,9 @@ struct ConfigurableTheme: ColorTheme {
             ))
         }
 
-        let id = name.lowercased().replacingOccurrences(of: " ", with: "_")
+        let id = (json["id"] as? String)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .nonEmpty ?? normalizedId(from: name)
 
         guard let colors = json["colors"] as? [String: String] else {
             return .failure(InvalidTheme(id: id, name: name, missingFields: ["colors"]))
@@ -122,6 +128,7 @@ struct ConfigurableTheme: ColorTheme {
     /// Initialize with explicit values (for programmatic creation)
     init(
         name: String,
+        id: String? = nil,
         background: Color,
         foreground: Color,
         accent: Color,
@@ -135,7 +142,7 @@ struct ConfigurableTheme: ColorTheme {
         divider: Color? = nil
     ) {
         self.name = name
-        self.id = name.lowercased().replacingOccurrences(of: " ", with: "_")
+        self.id = id?.trimmingCharacters(in: .whitespacesAndNewlines).nonEmpty ?? Self.normalizedId(from: name)
         self._background = background
         self._foreground = foreground
         self._accent = accent
@@ -170,9 +177,16 @@ struct ConfigurableTheme: ColorTheme {
         if let div = _divider { colors["divider"] = div.toHex() }
 
         return [
+            "id": id,
             "name": name,
             "colors": colors
         ]
+    }
+}
+
+private extension String {
+    var nonEmpty: String? {
+        isEmpty ? nil : self
     }
 }
 

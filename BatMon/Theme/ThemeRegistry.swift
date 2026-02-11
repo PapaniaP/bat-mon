@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Central registry for all available color themes
-/// Combines hardcoded themes with user-configurable themes from ~/.config/bat-mon/themes.json
+/// Combines hardcoded themes with user-configurable themes from Application Support/BatMon/themes.json.
 class ThemeRegistry: ObservableObject {
     static let shared = ThemeRegistry()
 
