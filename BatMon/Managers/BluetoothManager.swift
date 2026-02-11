@@ -40,6 +40,15 @@ class BluetoothManager: NSObject, ObservableObject {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
 
+        if sharedDefaults == nil {
+            logger.error(
+                "App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier, privacy: .public)'. Widget sync will be disabled; check entitlements and App Group configuration."
+            )
+            #if DEBUG
+            assertionFailure("App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier)'. Check entitlements/App Group configuration.")
+            #endif
+        }
+
         // Listen for system wake to trigger reconnection
         NotificationCenter.default.addObserver(
             self,
@@ -569,22 +578,29 @@ extension BluetoothManager: CBPeripheralDelegate {
 
     /// Updates shared storage with current battery data and notifies widgets to refresh
     func updateWidgetData() {
+        guard let defaults = sharedDefaults else {
+            logger.error(
+                "Skipping widget update: App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier, privacy: .public)'."
+            )
+            return
+        }
+
         guard let keyboard = selectedKeyboard else {
             // Clear widget data when disconnected
-            sharedDefaults?.removeObject(forKey: UserDefaultsKeys.widgetKeyboardName)
-            sharedDefaults?.removeObject(forKey: UserDefaultsKeys.widgetLeftBattery)
-            sharedDefaults?.removeObject(forKey: UserDefaultsKeys.widgetRightBattery)
-            sharedDefaults?.set(false, forKey: UserDefaultsKeys.widgetIsConnected)
-            sharedDefaults?.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
+            defaults.removeObject(forKey: UserDefaultsKeys.widgetKeyboardName)
+            defaults.removeObject(forKey: UserDefaultsKeys.widgetLeftBattery)
+            defaults.removeObject(forKey: UserDefaultsKeys.widgetRightBattery)
+            defaults.set(false, forKey: UserDefaultsKeys.widgetIsConnected)
+            defaults.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
             WidgetCenter.shared.reloadAllTimelines()
             return
         }
 
-        sharedDefaults?.set(keyboard.effectiveName, forKey: UserDefaultsKeys.widgetKeyboardName)
-        sharedDefaults?.set(keyboard.leftBattery?.percentage, forKey: UserDefaultsKeys.widgetLeftBattery)
-        sharedDefaults?.set(keyboard.rightBattery?.percentage, forKey: UserDefaultsKeys.widgetRightBattery)
-        sharedDefaults?.set(connectionState.isConnected, forKey: UserDefaultsKeys.widgetIsConnected)
-        sharedDefaults?.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
+        defaults.set(keyboard.effectiveName, forKey: UserDefaultsKeys.widgetKeyboardName)
+        defaults.set(keyboard.leftBattery?.percentage, forKey: UserDefaultsKeys.widgetLeftBattery)
+        defaults.set(keyboard.rightBattery?.percentage, forKey: UserDefaultsKeys.widgetRightBattery)
+        defaults.set(connectionState.isConnected, forKey: UserDefaultsKeys.widgetIsConnected)
+        defaults.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
 
         WidgetCenter.shared.reloadAllTimelines()
         logger.debug("Widget data updated")
