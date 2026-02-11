@@ -98,6 +98,7 @@ struct ConfigurableTheme: ColorTheme {
         // All required fields present - create the theme
         let theme = ConfigurableTheme(
             name: name,
+            id: id,
             background: Color(hex: colors["background"]!),
             foreground: Color(hex: colors["text"]!),
             accent: Color(hex: colors["accent"]!),

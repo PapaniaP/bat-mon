@@ -35,6 +35,10 @@
 		VW001 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC012 /* MenuBarView.swift */; };
 		VW002 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC013 /* SettingsView.swift */; };
 		VW003 /* BatIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC015 /* BatIconView.swift */; };
+		TSTBF001 /* ConfigurableThemeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TSTFILE001 /* ConfigurableThemeTests.swift */; };
+		TSTBF002 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = TSTFRAME001 /* XCTest.framework */; };
+		TSTBF003 /* ConfigurableTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D251E076DD584111F71226A8 /* ConfigurableTheme.swift */; };
+		TSTBF004 /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C4E4F0E1A2543778546A5F /* ColorTheme.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +73,9 @@
 		SRC013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		SRC014 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		SRC015 /* BatIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatIconView.swift; sourceTree = "<group>"; };
+		TSTFILE001 /* ConfigurableThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurableThemeTests.swift; sourceTree = "<group>"; };
+		TSTFRAME001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
+		TSTPROD001 /* BatMonTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BatMonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +83,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		TSTFRM001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				TSTBF002 /* XCTest.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -229,14 +244,24 @@
 			isa = PBXGroup;
 			children = (
 				PROD001 /* BatMon.app */,
+				TSTPROD001 /* BatMonTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		GRP011 /* BatMonTests */ = {
+			isa = PBXGroup;
+			children = (
+				TSTFILE001 /* ConfigurableThemeTests.swift */,
+			);
+			path = BatMonTests;
 			sourceTree = "<group>";
 		};
 		ROOT = {
 			isa = PBXGroup;
 			children = (
 				GRP001 /* BatMon */,
+				GRP011 /* BatMonTests */,
 				GRP010 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -261,6 +286,23 @@
 			productReference = PROD001 /* BatMon.app */;
 			productType = "com.apple.product-type.application";
 		};
+		TSTTGT001 /* BatMonTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = TSTCFG003 /* Build configuration list for PBXNativeTarget "BatMonTests" */;
+			buildPhases = (
+				TSTSRC001 /* Sources */,
+				TSTFRM001 /* Frameworks */,
+				TSTRSC001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BatMonTests;
+			productName = BatMonTests;
+			productReference = TSTPROD001 /* BatMonTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -272,6 +314,9 @@
 				LastUpgradeCheck = 1500;
 				TargetAttributes = {
 					TGT001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+					TSTTGT001 = {
 						CreatedOnToolsVersion = 15.0;
 					};
 				};
@@ -290,6 +335,7 @@
 			projectRoot = "";
 			targets = (
 				TGT001 /* BatMon */,
+				TSTTGT001 /* BatMonTests */,
 			);
 		};
 /* End PBXProject section */
@@ -300,6 +346,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				AST001 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		TSTRSC001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -337,6 +390,16 @@
 				6CBD2729A3B29946687BCF5E /* SolarizedLightTheme.swift in Sources */,
 				CA02E52BEABB0980CF3BF002 /* ConfigurableTheme.swift in Sources */,
 				EAD77E58AD06A434CC7E725E /* CustomThemeLoader.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		TSTSRC001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				TSTBF001 /* ConfigurableThemeTests.swift in Sources */,
+				TSTBF003 /* ConfigurableTheme.swift in Sources */,
+				TSTBF004 /* ColorTheme.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -515,6 +578,36 @@
 			};
 			name = Release;
 		};
+		TSTCFG004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.paolo.bat-mon.tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		TSTCFG004R /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.paolo.bat-mon.tests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -532,6 +625,15 @@
 			buildConfigurations = (
 				CFG004 /* Debug */,
 				CFG004R /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		TSTCFG003 /* Build configuration list for PBXNativeTarget "BatMonTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				TSTCFG004 /* Debug */,
+				TSTCFG004R /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
