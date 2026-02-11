@@ -35,16 +35,31 @@ enum AppConstants {
 
 enum UserDefaultsKeys {
     static let appSettings = "appSettings"
-    static let selectedKeyboardID = "selectedKeyboardID"
     static let selectedKeyboardData = "selectedKeyboardData"
     static let savedKeyboards = "savedKeyboards"
     static let hasCompletedSetup = "hasCompletedSetup"
+
+    // Widget data keys
+    static let widgetKeyboardName = "widgetKeyboardName"
+    static let widgetLeftBattery = "widgetLeftBattery"
+    static let widgetRightBattery = "widgetRightBattery"
+    static let widgetLastUpdated = "widgetLastUpdated"
+    static let widgetIsConnected = "widgetIsConnected"
+
+    // Widget theme keys
+    static let widgetThemeId = "widgetThemeId"
+    static let widgetMenuLayout = "widgetMenuLayout"
 }
 
 enum AppInfo {
     static let appName = "BatMon"
     static let bundleIdentifier = "com.paolo.bat-mon"
-    static let version = "1.0.0"
-    static let buildNumber = "1"
-    static let githubURL = "https://github.com/paolo/bat-mon"
+    static let appGroupIdentifier = "group.com.paolo.bat-mon"
+    static var version: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+    }
+    static var buildNumber: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+    }
+    static let githubURL = "https://github.com/PapaniaP/bat-mon"
 }

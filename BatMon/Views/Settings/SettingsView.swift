@@ -8,6 +8,11 @@ struct SettingsView: View {
                     Label("General", systemImage: "gear")
                 }
 
+            AppearanceSettingsView()
+                .tabItem {
+                    Label("Appearance", systemImage: "paintpalette")
+                }
+
             DisplaySettingsView()
                 .tabItem {
                     Label("Display", systemImage: "menubar.rectangle")
@@ -28,7 +33,7 @@ struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
-        .frame(width: 450, height: 320)
+        .frame(width: 480, height: 520)
     }
 }
 
@@ -37,14 +42,21 @@ struct SettingsView: View {
 struct GeneralSettingsView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager
 
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { LaunchAtLogin.isEnabled },
+            set: { LaunchAtLogin.isEnabled = $0 }
+        )
+    }
+
     var body: some View {
         Form {
             Section {
-                Toggle("Launch at Login", isOn: $preferencesManager.settings.launchAtLogin)
-                Toggle("Auto-reconnect to keyboard", isOn: $preferencesManager.settings.autoReconnect)
+                Toggle("Launch at Login", isOn: launchAtLoginBinding)
+                Toggle("Auto-reconnect after disconnect", isOn: $preferencesManager.settings.autoReconnect)
             }
 
-            Section("Battery Check Interval") {
+            Section("Battery Update Interval") {
                 Slider(
                     value: $preferencesManager.settings.pollingInterval,
                     in: AppConstants.minPollingInterval...AppConstants.maxPollingInterval,
@@ -57,19 +69,19 @@ struct GeneralSettingsView: View {
                     Text("5m")
                 }
 
-                Text("Check every \(Int(preferencesManager.settings.pollingInterval)) seconds")
+                Text("Update every \(Int(preferencesManager.settings.pollingInterval)) seconds")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
 
             Section {
                 Stepper(
-                    "Max reconnect attempts: \(preferencesManager.settings.maxReconnectAttempts)",
+                    "Reconnect attempts before failure: \(preferencesManager.settings.maxReconnectAttempts)",
                     value: $preferencesManager.settings.maxReconnectAttempts,
                     in: 1...20
                 )
 
-                Toggle("Enable debug logging", isOn: $preferencesManager.settings.enableDebugLogging)
+                Toggle("Enable debug logging (troubleshooting)", isOn: $preferencesManager.settings.enableDebugLogging)
             }
 
             Section {
@@ -83,19 +95,878 @@ struct GeneralSettingsView: View {
     }
 }
 
+// MARK: - Appearance Settings
+
+struct AppearanceSettingsView: View {
+    @EnvironmentObject var preferencesManager: PreferencesManager
+    @EnvironmentObject var bluetoothManager: BluetoothManager
+    @ObservedObject private var themeRegistry = ThemeRegistry.shared
+    @State private var showingThemeEditor = false
+    @State private var editingTheme: ConfigurableTheme?
+
+    private var currentTheme: any ColorTheme {
+        themeRegistry.theme(for: preferencesManager.settings.colorThemeId)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Live Preview at the top
+            LayoutThemePreview(
+                layout: preferencesManager.settings.menuLayout,
+                theme: currentTheme
+            )
+            .padding()
+            .background(Color(nsColor: .textBackgroundColor))
+
+            Divider()
+
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Layout Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Layout")
+                            .font(.headline)
+
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 12) {
+                            ForEach(MenuLayout.allCases) { layout in
+                                LayoutCard(
+                                    layout: layout,
+                                    isSelected: preferencesManager.settings.menuLayout == layout
+                                ) {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        preferencesManager.settings.menuLayout = layout
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    Divider()
+
+                    // Theme Section
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            Text("Color Theme")
+                                .font(.headline)
+
+                            Spacer()
+
+                            Button {
+                                if let url = URL(string: "https://github.com/PapaniaP/bat-mon#custom-themes") {
+                                    NSWorkspace.shared.open(url)
+                                }
+                            } label: {
+                                Image(systemName: "questionmark.circle")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                            .help("Open theme documentation")
+                        }
+
+                        if !preferencesManager.settings.menuLayout.usesFullThemePalette {
+                            Text("(applies key colors; TUI uses the full palette)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 12) {
+                            ForEach(themeRegistry.allThemes, id: \.id) { theme in
+                                ThemeCard(
+                                    theme: theme,
+                                    isSelected: preferencesManager.settings.colorThemeId == theme.id,
+                                    isCustom: themeRegistry.isCustom(theme.id)
+                                ) {
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        preferencesManager.settings.colorThemeId = theme.id
+                                    }
+                                } onEdit: {
+                                    if let customTheme = themeRegistry.customThemes.first(where: { $0.id == theme.id }) {
+                                        editingTheme = customTheme
+                                        showingThemeEditor = true
+                                    }
+                                }
+                            }
+
+                            // Show invalid themes with error state
+                            ForEach(themeRegistry.invalidThemes) { invalid in
+                                InvalidThemeCard(theme: invalid)
+                            }
+                        }
+
+                        // Add New Theme button
+                        Button {
+                            editingTheme = nil
+                            showingThemeEditor = true
+                        } label: {
+                            HStack {
+                                Image(systemName: "plus.circle.fill")
+                                Text("Create New Theme")
+                            }
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.top, 4)
+                    }
+                }
+                .padding()
+            }
+        }
+        .sheet(isPresented: $showingThemeEditor) {
+            ThemeEditorSheet(
+                editingTheme: editingTheme,
+                themeRegistry: themeRegistry,
+                preferencesManager: preferencesManager
+            )
+        }
+        .onAppear {
+            // Reload themes in case the user edited themes.json directly
+            themeRegistry.reloadCustomThemes()
+        }
+    }
+}
+
+// MARK: - Layout + Theme Preview
+
+struct LayoutThemePreview: View {
+    let layout: MenuLayout
+    let theme: any ColorTheme
+
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("Preview")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+
+            Group {
+                switch layout {
+                case .native:
+                    NativePreviewMini(theme: theme)
+                case .rich:
+                    RichPreviewMini(theme: theme)
+                case .minimal:
+                    MinimalPreviewMini(theme: theme)
+                case .tui:
+                    TUIPreviewMini(theme: theme)
+                }
+            }
+            .frame(maxWidth: 220)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+        }
+    }
+}
+
+// MARK: - Preview Mini Views
+
+struct NativePreviewMini: View {
+    let theme: any ColorTheme
+
+    var body: some View {
+        VStack(spacing: 8) {
+            HStack {
+                Image(systemName: "keyboard.fill")
+                    .font(.system(size: 10))
+                Text("Keyboard")
+                    .font(.system(size: 10, weight: .semibold))
+                Spacer()
+                Circle().fill(theme.success).frame(width: 6, height: 6)
+            }
+
+            HStack(spacing: 16) {
+                MiniArcGauge(percentage: 85, label: "L", color: theme.batteryColor(for: 85))
+                MiniArcGauge(percentage: 92, label: "R", color: theme.batteryColor(for: 92))
+            }
+
+            Text("Updated just now")
+                .font(.system(size: 8))
+                .foregroundStyle(.tertiary)
+        }
+        .padding(10)
+        .background(.ultraThinMaterial)
+    }
+}
+
+struct MiniArcGauge: View {
+    let percentage: Int
+    let label: String
+    let color: Color
+
+    var body: some View {
+        VStack(spacing: 2) {
+            ZStack {
+                Circle()
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 2)
+                Circle()
+                    .trim(from: 0, to: CGFloat(percentage) / 100)
+                    .stroke(color, style: StrokeStyle(lineWidth: 2, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Text("\(percentage)")
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+            }
+            .frame(width: 32, height: 32)
+            Text(label)
+                .font(.system(size: 7))
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+struct RichPreviewMini: View {
+    let theme: any ColorTheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Keyboard")
+                    .font(.system(size: 10, weight: .semibold))
+                Spacer()
+                Text("Connected")
+                    .font(.system(size: 7))
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(theme.success.opacity(0.2))
+                    .cornerRadius(4)
+            }
+
+            MiniHorizontalBar(label: "Left", percentage: 85, color: theme.batteryColor(for: 85))
+            MiniHorizontalBar(label: "Right", percentage: 92, color: theme.batteryColor(for: 92))
+        }
+        .padding(10)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+}
+
+struct MiniHorizontalBar: View {
+    let label: String
+    let percentage: Int
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            HStack {
+                Text(label)
+                    .font(.system(size: 8))
+                Spacer()
+                Text("\(percentage)%")
+                    .font(.system(size: 8, weight: .medium))
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(Color.gray.opacity(0.2))
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(color.gradient)
+                        .frame(width: geo.size.width * CGFloat(percentage) / 100)
+                }
+            }
+            .frame(height: 5)
+        }
+    }
+}
+
+struct MinimalPreviewMini: View {
+    let theme: any ColorTheme
+
+    var body: some View {
+        VStack(spacing: 6) {
+            HStack(spacing: 12) {
+                HStack(spacing: 2) {
+                    Text("L")
+                        .font(.system(size: 8))
+                        .foregroundStyle(.tertiary)
+                    Text("85%")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(theme.batteryColor(for: 85))
+                }
+                HStack(spacing: 2) {
+                    Text("R")
+                        .font(.system(size: 8))
+                        .foregroundStyle(.tertiary)
+                    Text("92%")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(theme.batteryColor(for: 92))
+                }
+            }
+            Divider()
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.clockwise").font(.system(size: 8))
+                Spacer()
+                Image(systemName: "gear").font(.system(size: 8))
+                Image(systemName: "power").font(.system(size: 8))
+            }
+            .foregroundStyle(.secondary)
+        }
+        .padding(10)
+        .background(Color(nsColor: .windowBackgroundColor))
+    }
+}
+
+struct TUIPreviewMini: View {
+    let theme: any ColorTheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text("bat-mon")
+                .font(.system(size: 7, weight: .bold, design: .monospaced))
+                .foregroundStyle(theme.accent)
+
+            HStack {
+                Text("Keyboard")
+                    .foregroundStyle(theme.foreground)
+                Spacer()
+                Text("●")
+                    .foregroundStyle(theme.success)
+            }
+
+            Divider().background(theme.divider)
+
+            Text("LEFT  ━━━━━━━━── 85%")
+                .foregroundStyle(theme.foreground)
+            Text("RIGHT ━━━━━━━━━─ 92%")
+                .foregroundStyle(theme.foreground)
+
+            Divider().background(theme.divider)
+
+            Text("~ refresh")
+                .foregroundStyle(theme.accent)
+        }
+        .font(.system(size: 7, design: .monospaced))
+        .padding(8)
+        .background(theme.background)
+    }
+}
+
+// MARK: - Layout Card
+
+struct LayoutCard: View {
+    let layout: MenuLayout
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(layout.displayName)
+                        .font(.system(size: 13, weight: .semibold))
+                    Spacer()
+                    if isSelected {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.blue)
+                    }
+                }
+
+                Text(layout.description)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
+            .padding(12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(isSelected ? Color.accentColor.opacity(0.1) : Color.primary.opacity(0.03))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Theme Card
+
+struct ThemeCard: View {
+    let theme: any ColorTheme
+    let isSelected: Bool
+    var isCustom: Bool = false
+    let action: () -> Void
+    var onEdit: (() -> Void)? = nil
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                // Color swatch preview
+                HStack(spacing: 3) {
+                    Circle().fill(theme.success).frame(width: 14, height: 14)
+                    Circle().fill(theme.warning).frame(width: 14, height: 14)
+                    Circle().fill(theme.error).frame(width: 14, height: 14)
+                    Circle().fill(theme.accent).frame(width: 14, height: 14)
+                }
+
+                Text(theme.name)
+                    .font(.system(size: 12, weight: .medium))
+
+                if isSelected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.blue)
+                        .font(.system(size: 14))
+                }
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity)
+            .background(isSelected ? Color.accentColor.opacity(0.1) : Color.primary.opacity(0.03))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)
+            )
+            .overlay(alignment: .topTrailing) {
+                if isCustom, let onEdit = onEdit {
+                    Button {
+                        onEdit()
+                    } label: {
+                        Image(systemName: "pencil.circle.fill")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .offset(x: 4, y: -4)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Invalid Theme Card
+
+struct InvalidThemeCard: View {
+    let theme: InvalidTheme
+    @State private var showingPopover = false
+
+    var body: some View {
+        Button {
+            showingPopover.toggle()
+        } label: {
+            VStack(spacing: 8) {
+                // Warning icon instead of color swatches
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 20))
+                    .foregroundStyle(.orange)
+
+                Text(theme.name)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(10)
+            .frame(maxWidth: .infinity)
+            .background(Color.orange.opacity(0.1))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .popover(isPresented: $showingPopover, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                    Text("Invalid Theme")
+                        .font(.headline)
+                }
+
+                Text("This theme is missing required color fields:")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                ForEach(theme.missingFields, id: \.self) { field in
+                    HStack(spacing: 6) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.red)
+                            .font(.system(size: 12))
+                        Text(field)
+                            .font(.system(size: 12, design: .monospaced))
+                    }
+                }
+
+                Divider()
+
+                Text("Edit themes.json to fix this theme.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .frame(minWidth: 200)
+        }
+    }
+}
+
+// MARK: - Theme Editor Sheet
+
+struct ThemeEditorSheet: View {
+    let editingTheme: ConfigurableTheme?
+    @ObservedObject var themeRegistry: ThemeRegistry
+    @ObservedObject var preferencesManager: PreferencesManager
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var themeName: String
+    @State private var backgroundColor: Color
+    @State private var textColor: Color
+    @State private var accentColor: Color
+    @State private var healthyColor: Color
+    @State private var warningColor: Color
+    @State private var alertColor: Color
+
+    @State private var showingDeleteConfirmation = false
+    @State private var errorMessage: String?
+
+    private var isEditing: Bool { editingTheme != nil }
+
+    init(editingTheme: ConfigurableTheme?, themeRegistry: ThemeRegistry, preferencesManager: PreferencesManager) {
+        self.editingTheme = editingTheme
+        self.themeRegistry = themeRegistry
+        self.preferencesManager = preferencesManager
+
+        let seedTheme: any ColorTheme = editingTheme ?? themeRegistry.theme(for: preferencesManager.settings.colorThemeId)
+        self._themeName = State(initialValue: editingTheme?.name ?? "")
+        self._backgroundColor = State(initialValue: seedTheme.background)
+        self._textColor = State(initialValue: seedTheme.foreground)
+        self._accentColor = State(initialValue: seedTheme.accent)
+        self._healthyColor = State(initialValue: seedTheme.success)
+        self._warningColor = State(initialValue: seedTheme.warning)
+        self._alertColor = State(initialValue: seedTheme.error)
+    }
+
+    private var previewTheme: ConfigurableTheme {
+        ConfigurableTheme(
+            name: themeName.isEmpty ? "Preview" : themeName,
+            background: backgroundColor,
+            foreground: textColor,
+            accent: accentColor,
+            success: healthyColor,
+            warning: warningColor,
+            error: alertColor
+        )
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack {
+                Button("Cancel") { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Text(isEditing ? "Edit Theme" : "New Theme")
+                    .font(.headline)
+
+                Spacer()
+
+                Button(isEditing ? "Save" : "Create") {
+                    saveTheme()
+                }
+                .keyboardShortcut(.defaultAction)
+                .disabled(themeName.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            .padding()
+
+            Divider()
+
+            // Live Preview
+            TUIPreviewMini(theme: previewTheme)
+                .frame(maxWidth: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding()
+
+            Divider()
+
+            // Editor Form
+            Form {
+                Section("Theme Name") {
+                    TextField("Name", text: $themeName)
+                }
+
+                Section("Colors") {
+                    ColorPicker("Background", selection: $backgroundColor)
+                    ColorPicker("Text", selection: $textColor)
+                    ColorPicker("Accent", selection: $accentColor)
+                    ColorPicker("Healthy (>40%)", selection: $healthyColor)
+                    ColorPicker("Warning (21-40%)", selection: $warningColor)
+                    ColorPicker("Alert (≤20%)", selection: $alertColor)
+                }
+
+                if let error = errorMessage {
+                    Section {
+                        Text(error)
+                            .foregroundStyle(.red)
+                            .font(.caption)
+                    }
+                }
+
+                if isEditing {
+                    Section {
+                        Button("Delete Theme", role: .destructive) {
+                            showingDeleteConfirmation = true
+                        }
+                    }
+                }
+            }
+            .formStyle(.grouped)
+        }
+        .frame(width: 400, height: 550)
+        .alert("Delete Theme?", isPresented: $showingDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Delete", role: .destructive) {
+                deleteTheme()
+            }
+        } message: {
+            Text("This will permanently remove \"\(editingTheme?.name ?? "")\" from your themes.")
+        }
+    }
+
+    private func saveTheme() {
+        let trimmedName = themeName.trimmingCharacters(in: .whitespaces)
+        guard !trimmedName.isEmpty else {
+            errorMessage = "Theme name cannot be empty"
+            return
+        }
+
+        let newTheme = ConfigurableTheme(
+            name: trimmedName,
+            id: editingTheme?.id,
+            background: backgroundColor,
+            foreground: textColor,
+            accent: accentColor,
+            success: healthyColor,
+            warning: warningColor,
+            error: alertColor
+        )
+
+        do {
+            try themeRegistry.saveCustomTheme(newTheme)
+            // Select the newly created/updated theme
+            preferencesManager.settings.colorThemeId = newTheme.id
+            dismiss()
+        } catch {
+            errorMessage = "Failed to save theme: \(error.localizedDescription)"
+        }
+    }
+
+    private func deleteTheme() {
+        guard let theme = editingTheme else { return }
+
+        do {
+            try themeRegistry.removeCustomTheme(withId: theme.id)
+            if preferencesManager.settings.colorThemeId == theme.id {
+                preferencesManager.settings.colorThemeId = "system"
+            }
+            dismiss()
+        } catch {
+            errorMessage = "Failed to delete theme: \(error.localizedDescription)"
+        }
+    }
+}
+
 // MARK: - Display Settings
 
 struct DisplaySettingsView: View {
     @EnvironmentObject var preferencesManager: PreferencesManager
+    @ObservedObject private var themeRegistry = ThemeRegistry.shared
+    @State private var showingIconPicker = false
+
+    private var currentTheme: any ColorTheme {
+        themeRegistry.theme(for: preferencesManager.settings.colorThemeId)
+    }
+
+    private var usesThemeDisconnectedIconColors: Bool {
+        preferencesManager.settings.useThemeDisconnectedIconColors ?? true
+    }
+
+    private var useThemeDisconnectedIconBinding: Binding<Bool> {
+        Binding(
+            get: { usesThemeDisconnectedIconColors },
+            set: { preferencesManager.settings.useThemeDisconnectedIconColors = $0 }
+        )
+    }
+
+    private var disconnectedFillColor: Color {
+        if usesThemeDisconnectedIconColors {
+            return currentTheme.accent
+        }
+        return Color(hex: preferencesManager.settings.disconnectedIconFillHex)
+    }
+
+    private var disconnectedBorderColor: Color? {
+        guard preferencesManager.settings.disconnectedIconBorderEnabled else { return nil }
+        if usesThemeDisconnectedIconColors {
+            return currentTheme.foreground
+        }
+        return Color(hex: preferencesManager.settings.disconnectedIconBorderHex)
+    }
+
+    private var previewText: String? {
+        let settings = preferencesManager.settings
+
+        // Compact mode shows icon only - no text preview
+        if settings.compactMode {
+            return nil
+        }
+
+        if settings.useExperimentalFormat {
+            return settings.experimentalFormat.example
+        }
+
+        let suffix = settings.showPercentSymbol ? "%" : ""
+
+        switch settings.displayFormat {
+        case .percentage:
+            return "85\(suffix)\(settings.separator)90\(suffix)"
+        case .leftOnly:
+            return "85\(suffix)"
+        case .rightOnly:
+            return "90\(suffix)"
+        case .lowest:
+            return "85\(suffix)"
+        }
+    }
+
 
     var body: some View {
         Form {
-            Section("Menu Bar Icon") {
-                Picker("Icon", selection: $preferencesManager.settings.menuBarIcon) {
-                    ForEach(MenuBarIcon.allCases) { icon in
-                        HStack {
-                            if icon != .none {
+            // Live Preview
+            Section {
+                HStack {
+                    Spacer()
+                    HStack(spacing: 6) {
+                        // Show icon based on mode
+                        if preferencesManager.settings.compactMode {
+                            let iconName = preferencesManager.settings.compactIcon == .custom
+                                ? preferencesManager.settings.customCompactIcon
+                                : preferencesManager.settings.compactIcon.sfSymbolName
+                            Image(systemName: iconName)
+                        } else if let iconName = preferencesManager.settings.menuBarIcon.sfSymbolName {
+                            Image(systemName: iconName)
+                        }
+                        if let text = previewText {
+                            Text(text)
+                                .monospacedDigit()
+                        }
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Color.gray.opacity(0.2))
+                    .cornerRadius(6)
+                    Spacer()
+                }
+            } header: {
+                Text("Preview")
+            }
+
+            // Compact Mode Section
+            Section {
+                Toggle("Compact Mode", isOn: $preferencesManager.settings.compactMode)
+
+                if preferencesManager.settings.compactMode {
+                    // Icon picker grid
+                    LazyVGrid(columns: [
+                        GridItem(.adaptive(minimum: 44))
+                    ], spacing: 8) {
+                        // Preset icons (excluding .custom)
+                        ForEach(CompactModeIcon.allCases.filter { $0 != .custom }) { icon in
+                            Button(action: {
+                                preferencesManager.settings.compactIcon = icon
+                            }) {
                                 Image(systemName: icon.sfSymbolName)
+                                    .font(.system(size: 18))
+                                    .frame(width: 40, height: 40)
+                                    .background(
+                                        preferencesManager.settings.compactIcon == icon
+                                            ? Color.accentColor.opacity(0.2)
+                                            : Color.gray.opacity(0.1)
+                                    )
+                                    .cornerRadius(8)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .stroke(
+                                                preferencesManager.settings.compactIcon == icon
+                                                    ? Color.accentColor
+                                                    : Color.clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                            }
+                            .buttonStyle(.plain)
+                            .help(icon.displayName)
+                        }
+
+                        // Custom icon button
+                        Button(action: {
+                            preferencesManager.settings.compactIcon = .custom
+                            showingIconPicker = true
+                        }) {
+                            ZStack {
+                                if preferencesManager.settings.compactIcon == .custom {
+                                    Image(systemName: preferencesManager.settings.customCompactIcon)
+                                        .font(.system(size: 18))
+                                } else {
+                                    Image(systemName: "ellipsis")
+                                        .font(.system(size: 18))
+                                }
+                            }
+                            .frame(width: 40, height: 40)
+                            .background(
+                                preferencesManager.settings.compactIcon == .custom
+                                    ? Color.accentColor.opacity(0.2)
+                                    : Color.gray.opacity(0.1)
+                            )
+                            .cornerRadius(8)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(
+                                        preferencesManager.settings.compactIcon == .custom
+                                            ? Color.accentColor
+                                            : Color.clear,
+                                        lineWidth: 2
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .help("Custom icon")
+                    }
+                    .padding(.vertical, 4)
+
+                    // Show "Change" button if custom is selected
+                    if preferencesManager.settings.compactIcon == .custom {
+                        Button("Change Custom Icon...") {
+                            showingIconPicker = true
+                        }
+                        .font(.caption)
+                    }
+                }
+            } header: {
+                Text("Compact Mode")
+            } footer: {
+                Text("Shows only an icon in the menu bar. Battery info appears when you click it.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+
+            Section("Icon") {
+                Picker("Menu Bar Icon", selection: $preferencesManager.settings.menuBarIcon) {
+                    ForEach(MenuBarIcon.allCases) { icon in
+                        HStack(spacing: 8) {
+                            if let sfName = icon.sfSymbolName {
+                                Image(systemName: sfName)
+                                    .frame(width: 20)
+                            } else {
+                                Text("—")
+                                    .frame(width: 20)
                             }
                             Text(icon.displayName)
                         }
@@ -104,28 +975,124 @@ struct DisplaySettingsView: View {
                 }
                 .pickerStyle(.radioGroup)
             }
+            .disabled(preferencesManager.settings.compactMode || preferencesManager.settings.useExperimentalFormat)
 
-            Section("Display Format") {
-                Picker("Format", selection: $preferencesManager.settings.displayFormat) {
+            Section("Format") {
+                Picker("Display Format", selection: $preferencesManager.settings.displayFormat) {
                     ForEach(DisplayFormat.allCases) { format in
-                        Text(format.displayName)
-                            .tag(format)
+                        VStack(alignment: .leading) {
+                            Text(format.displayName)
+                        }
+                        .tag(format)
                     }
                 }
                 .pickerStyle(.radioGroup)
+
+                Toggle("Show % symbol", isOn: $preferencesManager.settings.showPercentSymbol)
             }
+            .disabled(preferencesManager.settings.compactMode || preferencesManager.settings.useExperimentalFormat)
 
             Section("Separator") {
-                TextField("Separator", text: $preferencesManager.settings.separator)
-                    .frame(width: 80)
+                Picker("Separator", selection: $preferencesManager.settings.separator) {
+                    ForEach(SeparatorOption.allCases) { option in
+                        Text(option.displayName)
+                            .tag(option.rawValue)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+            .disabled(preferencesManager.settings.compactMode || preferencesManager.settings.useExperimentalFormat)
 
-                Text("Preview: 85%\(preferencesManager.settings.separator)90%")
+            // Experimental Section
+            Section {
+                Toggle("Enable Experimental Format", isOn: $preferencesManager.settings.useExperimentalFormat)
+
+                if preferencesManager.settings.useExperimentalFormat {
+                    Picker("Style", selection: $preferencesManager.settings.experimentalFormat) {
+                        ForEach(ExperimentalFormat.allCases) { format in
+                            HStack {
+                                Text(format.displayName)
+                                Spacer()
+                                Text(format.example)
+                                    .font(.system(size: 11, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                            }
+                            .tag(format)
+                        }
+                    }
+                    .pickerStyle(.radioGroup)
+                }
+            } header: {
+                HStack {
+                    Text("Experimental")
+                    Text("⚗️")
+                }
+            } footer: {
+                Text("Visual styles that may not work perfectly on all systems.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .disabled(preferencesManager.settings.compactMode)
+
+            // Disconnected Icon Customization
+            Section {
+                // Preview
+                HStack {
+                    Spacer()
+                    BatIconView(
+                        fillColor: disconnectedFillColor,
+                        borderColor: disconnectedBorderColor
+                    )
+                    .scaleEffect(2.0)
+                    .frame(width: 50, height: 35)
+                    Spacer()
+                }
+                .padding(.vertical, 8)
+                .background(Color.black.opacity(0.8))
+                .cornerRadius(6)
+
+                Toggle("Follow selected color theme", isOn: useThemeDisconnectedIconBinding)
+
+                if usesThemeDisconnectedIconColors {
+                    Text("Using \"\(currentTheme.name)\" accent color for fill and text color for border.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                } else {
+                    // Fill color picker
+                    ColorPicker(
+                        "Icon Color",
+                        selection: Binding(
+                            get: { Color(hex: preferencesManager.settings.disconnectedIconFillHex) },
+                            set: { preferencesManager.settings.disconnectedIconFillHex = $0.toHex() }
+                        )
+                    )
+                }
+
+                // Border toggle and color
+                Toggle("Show Border", isOn: $preferencesManager.settings.disconnectedIconBorderEnabled)
+
+                if preferencesManager.settings.disconnectedIconBorderEnabled && !usesThemeDisconnectedIconColors {
+                    ColorPicker(
+                        "Border Color",
+                        selection: Binding(
+                            get: { Color(hex: preferencesManager.settings.disconnectedIconBorderHex) },
+                            set: { preferencesManager.settings.disconnectedIconBorderHex = $0.toHex() }
+                        )
+                    )
+                }
+            } header: {
+                Text("Disconnected Icon")
+            } footer: {
+                Text("Customize the bat icon shown when no keyboard is connected.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
         }
         .formStyle(.grouped)
         .padding()
+        .sheet(isPresented: $showingIconPicker) {
+            SFSymbolPicker(selectedSymbol: $preferencesManager.settings.customCompactIcon)
+        }
     }
 }
 
@@ -137,7 +1104,7 @@ struct NotificationSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Toggle("Enable battery notifications", isOn: $preferencesManager.settings.enableNotifications)
+                Toggle("Enable battery alerts", isOn: $preferencesManager.settings.enableNotifications)
             }
 
             Section("Alert Thresholds") {
@@ -184,7 +1151,6 @@ struct NotificationSettingsView: View {
 
 struct KeyboardsSettingsView: View {
     @EnvironmentObject var bluetoothManager: BluetoothManager
-    @EnvironmentObject var preferencesManager: PreferencesManager
 
     var body: some View {
         Form {
@@ -208,8 +1174,7 @@ struct KeyboardsSettingsView: View {
                     }
 
                     Button("Forget Keyboard") {
-                        preferencesManager.clearSelectedKeyboard()
-                        bluetoothManager.disconnect()
+                        bluetoothManager.forgetSelectedKeyboard()
                     }
                 } else {
                     Text("No keyboard selected")
@@ -273,8 +1238,10 @@ struct AboutView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
 
-            Link("View on GitHub", destination: URL(string: AppInfo.githubURL)!)
-                .font(.caption)
+            if let githubURL = URL(string: AppInfo.githubURL) {
+                Link("View on GitHub", destination: githubURL)
+                    .font(.caption)
+            }
 
             Spacer()
 

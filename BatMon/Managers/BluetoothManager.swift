@@ -2,6 +2,7 @@ import Foundation
 import CoreBluetooth
 import Combine
 import os.log
+import WidgetKit
 
 class BluetoothManager: NSObject, ObservableObject {
     // MARK: - Published Properties
@@ -22,9 +23,10 @@ class BluetoothManager: NSObject, ObservableObject {
 
     private var scanTimer: Timer?
     private var pollingTimer: Timer?
+    private var cancellables = Set<AnyCancellable>()
 
     private let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "Bluetooth")
-
+    private let sharedDefaults = UserDefaults(suiteName: AppInfo.appGroupIdentifier)
 
     // MARK: - Reconnection
 
@@ -38,6 +40,15 @@ class BluetoothManager: NSObject, ObservableObject {
         super.init()
         centralManager = CBCentralManager(delegate: self, queue: nil)
 
+        if sharedDefaults == nil {
+            logger.error(
+                "App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier, privacy: .public)'. Widget sync will be disabled; check entitlements and App Group configuration."
+            )
+            #if DEBUG
+            assertionFailure("App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier)'. Check entitlements/App Group configuration.")
+            #endif
+        }
+
         // Listen for system wake to trigger reconnection
         NotificationCenter.default.addObserver(
             self,
@@ -45,6 +56,18 @@ class BluetoothManager: NSObject, ObservableObject {
             name: .systemDidWake,
             object: nil
         )
+
+        // Watch for polling interval changes
+        PreferencesManager.shared.$settings
+            .map(\.pollingInterval)
+            .removeDuplicates()
+            .dropFirst() // Skip initial value
+            .sink { [weak self] newInterval in
+                guard let self = self, self.connectionState.isConnected else { return }
+                self.logger.info("Polling interval changed to \(newInterval)s, restarting timer")
+                self.startPolling(interval: newInterval)
+            }
+            .store(in: &cancellables)
 
         // Load saved keyboard on init
         loadSavedKeyboard()
@@ -68,14 +91,13 @@ class BluetoothManager: NSObject, ObservableObject {
 
         guard !isScanning else { return }
 
-        logger.info("Retrieving connected devices with Battery Service...")
+        logger.info("Scanning for devices with Battery Service...")
         isScanning = true
         connectionState = .searching
         availableKeyboards.removeAll()
         discoveredPeripherals.removeAll()
 
-        // Get already-connected devices with Battery Service (like Mighty Mitts does)
-        // This finds devices already paired/connected to macOS - no scanning needed
+        // Include already-connected devices immediately.
         let connectedPeripherals = centralManager.retrieveConnectedPeripherals(withServices: [BLEConstants.batteryServiceUUID])
         logger.info("Found \(connectedPeripherals.count) connected device(s) with Battery Service")
 
@@ -89,12 +111,29 @@ class BluetoothManager: NSObject, ObservableObject {
                     peripheralIdentifier: peripheral.identifier
                 )
                 availableKeyboards.append(keyboard)
+            } else {
+                logger.debug("Skipping unnamed device: \(peripheral.identifier)")
             }
         }
 
-        // Done immediately - no actual scanning needed
-        isScanning = false
-        connectionState = .disconnected
+        if connectedPeripherals.isEmpty {
+            logger.info("No connected devices found, starting active BLE scan")
+            centralManager.scanForPeripherals(
+                withServices: [BLEConstants.batteryServiceUUID],
+                options: [CBCentralManagerScanOptionAllowDuplicatesKey: false]
+            )
+
+            scanTimer?.invalidate()
+            scanTimer = Timer.scheduledTimer(withTimeInterval: BLEConstants.scanTimeout, repeats: false) { [weak self] _ in
+                guard let self else { return }
+                self.logger.info("Scan timeout reached")
+                self.stopScanning()
+            }
+        } else {
+            logger.info("Using connected devices only; active scan not needed")
+            isScanning = false
+            connectionState = .idle
+        }
     }
 
     func stopScanning() {
@@ -107,7 +146,7 @@ class BluetoothManager: NSObject, ObservableObject {
         scanTimer = nil
 
         if connectionState == .searching {
-            connectionState = .disconnected
+            connectionState = availableKeyboards.isEmpty ? .disconnected : .idle
         }
     }
 
@@ -128,9 +167,11 @@ class BluetoothManager: NSObject, ObservableObject {
         guard let peripheral = connectedPeripheral else { return }
 
         logger.info("Disconnecting from \(peripheral.name ?? "Unknown")")
+        cacheSelectedKeyboardForQuickReconnect(peripheral: peripheral)
         centralManager.cancelPeripheralConnection(peripheral)
         stopPolling()
         stopReconnecting()
+        updateWidgetData()
     }
 
     func reconnect() {
@@ -145,6 +186,7 @@ class BluetoothManager: NSObject, ObservableObject {
         if let peripheral = knownPeripherals.first {
             logger.info("Found known peripheral, attempting reconnection")
             discoveredPeripherals[keyboard.peripheralIdentifier] = peripheral
+            cacheKeyboardForQuickReconnect(keyboard: keyboard, peripheral: peripheral)
             connectionState = .connecting
             centralManager.connect(peripheral, options: nil)
         } else {
@@ -168,6 +210,28 @@ class BluetoothManager: NSObject, ObservableObject {
         selectedKeyboard = keyboard
         saveSelectedKeyboard()
         connect(to: keyboard)
+    }
+
+    func forgetSelectedKeyboard() {
+        logger.info("Forgetting selected keyboard")
+
+        stopScanning()
+        stopReconnecting()
+        stopPolling()
+
+        if let peripheral = connectedPeripheral {
+            centralManager.cancelPeripheralConnection(peripheral)
+        }
+
+        connectedPeripheral = nil
+        batteryCharacteristics.removeAll()
+        discoveredPeripherals.removeAll()
+        availableKeyboards.removeAll()
+        selectedKeyboard = nil
+        connectionState = .disconnected
+
+        PreferencesManager.shared.clearSelectedKeyboard()
+        updateWidgetData()
     }
 
     // MARK: - Polling
@@ -242,6 +306,21 @@ class BluetoothManager: NSObject, ObservableObject {
     private func saveSelectedKeyboard() {
         guard let keyboard = selectedKeyboard else { return }
         PreferencesManager.shared.saveKeyboard(keyboard)
+    }
+
+    private func cacheSelectedKeyboardForQuickReconnect(peripheral: CBPeripheral) {
+        guard var keyboard = selectedKeyboard else { return }
+        keyboard.isConnected = false
+        cacheKeyboardForQuickReconnect(keyboard: keyboard, peripheral: peripheral)
+    }
+
+    private func cacheKeyboardForQuickReconnect(keyboard: ZMKKeyboard, peripheral: CBPeripheral) {
+        discoveredPeripherals[keyboard.peripheralIdentifier] = peripheral
+        if let index = availableKeyboards.firstIndex(where: { $0.peripheralIdentifier == keyboard.peripheralIdentifier }) {
+            availableKeyboards[index] = keyboard
+        } else {
+            availableKeyboards.append(keyboard)
+        }
     }
 
     // MARK: - System Events
@@ -362,8 +441,10 @@ extension BluetoothManager: CBCentralManagerDelegate {
         if var keyboard = selectedKeyboard {
             keyboard.isConnected = false
             selectedKeyboard = keyboard
+            cacheKeyboardForQuickReconnect(keyboard: keyboard, peripheral: peripheral)
         }
         saveSelectedKeyboard()
+        updateWidgetData()
 
         // Auto-reconnect if unexpected disconnect
         if error != nil {
@@ -443,7 +524,7 @@ extension BluetoothManager: CBPeripheralDelegate {
             return
         }
 
-        let percentage = Int(data[0])
+        let percentage = min(max(Int(data[0]), 0), 100)
         let batteryLevel = BatteryLevel(percentage: percentage, timestamp: Date())
 
         // Identify which half by finding this characteristic in our stored array
@@ -465,6 +546,7 @@ extension BluetoothManager: CBPeripheralDelegate {
                 keyboard.rightBattery = batteryLevel
             }
             selectedKeyboard = keyboard  // Reassign to trigger @Published update
+            updateWidgetData()
         }
 
         // Check for low battery notifications
@@ -475,19 +557,52 @@ extension BluetoothManager: CBPeripheralDelegate {
         let settings = PreferencesManager.shared.settings
 
         guard settings.enableNotifications else { return }
+        guard let keyboard = selectedKeyboard else { return }
 
         if percentage <= settings.criticalBatteryThreshold {
             NotificationManager.shared.sendCriticalBatteryAlert(
-                keyboard: selectedKeyboard!,
+                keyboard: keyboard,
                 half: half,
                 percentage: percentage
             )
         } else if percentage <= settings.lowBatteryThreshold {
             NotificationManager.shared.sendLowBatteryAlert(
-                keyboard: selectedKeyboard!,
+                keyboard: keyboard,
                 half: half,
                 percentage: percentage
             )
         }
+    }
+
+    // MARK: - Widget Updates
+
+    /// Updates shared storage with current battery data and notifies widgets to refresh
+    func updateWidgetData() {
+        guard let defaults = sharedDefaults else {
+            logger.error(
+                "Skipping widget update: App Group UserDefaults unavailable for suite '\(AppInfo.appGroupIdentifier, privacy: .public)'."
+            )
+            return
+        }
+
+        guard let keyboard = selectedKeyboard else {
+            // Clear widget data when disconnected
+            defaults.removeObject(forKey: UserDefaultsKeys.widgetKeyboardName)
+            defaults.removeObject(forKey: UserDefaultsKeys.widgetLeftBattery)
+            defaults.removeObject(forKey: UserDefaultsKeys.widgetRightBattery)
+            defaults.set(false, forKey: UserDefaultsKeys.widgetIsConnected)
+            defaults.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
+            WidgetCenter.shared.reloadAllTimelines()
+            return
+        }
+
+        defaults.set(keyboard.effectiveName, forKey: UserDefaultsKeys.widgetKeyboardName)
+        defaults.set(keyboard.leftBattery?.percentage, forKey: UserDefaultsKeys.widgetLeftBattery)
+        defaults.set(keyboard.rightBattery?.percentage, forKey: UserDefaultsKeys.widgetRightBattery)
+        defaults.set(connectionState.isConnected, forKey: UserDefaultsKeys.widgetIsConnected)
+        defaults.set(Date(), forKey: UserDefaultsKeys.widgetLastUpdated)
+
+        WidgetCenter.shared.reloadAllTimelines()
+        logger.debug("Widget data updated")
     }
 }

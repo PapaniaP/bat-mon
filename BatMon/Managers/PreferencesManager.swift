@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import os.log
+import WidgetKit
 
 class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
@@ -13,19 +14,24 @@ class PreferencesManager: ObservableObject {
 
     @Published var hasCompletedSetup: Bool
 
-    private let defaults = UserDefaults.standard
+    private let defaults = UserDefaults(suiteName: AppInfo.appGroupIdentifier) ?? .standard
     private let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "Preferences")
 
     private init() {
         // Load settings or use defaults
         if let data = defaults.data(forKey: UserDefaultsKeys.appSettings),
-           let loaded = try? JSONDecoder().decode(AppSettings.self, from: data) {
+           var loaded = try? JSONDecoder().decode(AppSettings.self, from: data) {
+            // Migrate from old MenuStyle to new Layout + Theme system
+            loaded.migrateFromMenuStyleIfNeeded()
             self.settings = loaded
         } else {
             self.settings = AppSettings()
         }
 
         self.hasCompletedSetup = defaults.bool(forKey: UserDefaultsKeys.hasCompletedSetup)
+
+        // Save settings after migration (if any occurred)
+        saveSettings()
     }
 
     // MARK: - Settings
@@ -34,6 +40,12 @@ class PreferencesManager: ObservableObject {
         do {
             let data = try JSONEncoder().encode(settings)
             defaults.set(data, forKey: UserDefaultsKeys.appSettings)
+
+            // Sync theme to widget
+            defaults.set(settings.colorThemeId, forKey: UserDefaultsKeys.widgetThemeId)
+            defaults.set(settings.menuLayout.rawValue, forKey: UserDefaultsKeys.widgetMenuLayout)
+            WidgetCenter.shared.reloadAllTimelines()
+
             logger.info("Settings saved")
         } catch {
             logger.error("Failed to save settings: \(error.localizedDescription)")
@@ -51,7 +63,6 @@ class PreferencesManager: ObservableObject {
         do {
             let data = try JSONEncoder().encode(keyboard)
             defaults.set(data, forKey: UserDefaultsKeys.selectedKeyboardData)
-            defaults.set(keyboard.id.uuidString, forKey: UserDefaultsKeys.selectedKeyboardID)
             logger.info("Saved keyboard: \(keyboard.name)")
         } catch {
             logger.error("Failed to save keyboard: \(error.localizedDescription)")
@@ -75,7 +86,6 @@ class PreferencesManager: ObservableObject {
 
     func clearSelectedKeyboard() {
         defaults.removeObject(forKey: UserDefaultsKeys.selectedKeyboardData)
-        defaults.removeObject(forKey: UserDefaultsKeys.selectedKeyboardID)
         logger.info("Cleared selected keyboard")
     }
 

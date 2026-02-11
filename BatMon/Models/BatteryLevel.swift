@@ -3,7 +3,6 @@ import SwiftUI
 struct BatteryLevel: Codable, Equatable {
     let percentage: Int
     let timestamp: Date
-    var isCharging: Bool = false
 
     var color: Color {
         switch percentage {
@@ -24,12 +23,5 @@ struct BatteryLevel: Codable, Equatable {
         case 76...100: return "battery.100"
         default: return "battery.0"
         }
-    }
-
-    var visualBar: String {
-        let filled = Int(Double(percentage) / 20.0)
-        let empty = 5 - filled
-        return String(repeating: "\u{2588}", count: filled) +
-               String(repeating: "\u{2591}", count: empty)
     }
 }

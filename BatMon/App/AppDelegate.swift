@@ -1,7 +1,9 @@
 import AppKit
 import UserNotifications
+import os.log
 
 class AppDelegate: NSObject, NSApplicationDelegate {
+    private let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "AppDelegate")
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Request notification permissions
@@ -26,9 +28,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func requestNotificationPermissions() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { granted, error in
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] granted, error in
             if let error = error {
-                print("Notification permission error: \(error.localizedDescription)")
+                self?.logger.error("Notification permission error: \(error.localizedDescription)")
             }
         }
     }
