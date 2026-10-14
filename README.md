@@ -68,6 +68,65 @@ Screenshot: Show Settings window with Appearance tab open
 ![Settings](assets/settings.png)
 -->
 
+## Status export for SketchyBar
+
+BatMon writes a local `status.json` snapshot at startup, on connection/keyboard
+changes, after every successful battery read (even if the percentage is
+unchanged), and when polling intervals or battery thresholds change. Writes are
+atomic and asynchronous; export failures are logged without interrupting battery
+monitoring. No Bluetooth identifiers are exported.
+
+The file lives beside `themes.json` in BatMon's Application Support directory.
+For sandboxed builds, use the path matching the running app:
+
+- Release: `~/Library/Containers/com.paolo.bat-mon/Data/Library/Application Support/BatMon/status.json`
+- Local debug: `~/Library/Containers/com.paolo.bat-mon.local/Data/Library/Application Support/BatMon/status.json`
+
+Unsandboxed builds use `~/Library/Application Support/BatMon/status.json`.
+Do not combine debug and release snapshots.
+
+```json
+{
+  "version": 1,
+  "connectionState": "connected",
+  "keyboardName": "My keyboard",
+  "leftPercent": 85,
+  "rightPercent": null,
+  "leftBatteryReadAt": "2026-10-14T12:00:00Z",
+  "rightBatteryReadAt": null,
+  "exportedAt": "2026-10-14T12:00:00Z",
+  "pollingIntervalSeconds": 60,
+  "lowBatteryThreshold": 20,
+  "criticalBatteryThreshold": 10
+}
+```
+
+All keys are present. `keyboardName`, percentages, and per-half read timestamps
+are `null` when unknown; zero percent is a valid reading. Names use the configured
+display name when available. Timestamps are UTC ISO 8601. `connectionState` is one
+of `disconnected`, `idle`, `searching`, `connecting`, `connected`, `reconnecting`,
+or `failed`, with no failure details included.
+
+For a SketchyBar consumer:
+
+- Hide the item unless `connectionState` is `connected`.
+- Check freshness separately for each half using its read timestamp. A suggested
+  limit is `max(180 seconds, 3 * pollingIntervalSeconds)`. Show unknown/stale
+  readings as unknown; cached readings can survive a reconnect.
+- `exportedAt` describes when the document was produced, not battery freshness.
+- Missing, malformed, or unsupported-version files must not display live numbers.
+- Read on startup and wake. To refresh promptly, watch the **containing directory**
+  for atomic file replacements and trigger the SketchyBar event from the consumer.
+  A watch on the original file inode can miss replacements. Keep polling as recovery.
+
+On normal quit, BatMon stops accepting exports and waits up to one second for a
+final disconnected snapshot after pending writes. Timeout, write failure, crash,
+or force quit can leave the previous file, so freshness checks are still required.
+
+This is stage one of the integration: the status-file producer. SketchyBar
+watcher/configuration, refresh events, and opening an anchored BatMon panel from
+a widget are separate follow-up work. BatMon does not launch SketchyBar.
+
 ## Custom Themes
 
 bat-mon supports custom color themes via a JSON configuration file.

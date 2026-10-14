@@ -33,33 +33,61 @@ enum AppConstants {
     static let notificationCooldown: TimeInterval = 3600.0
 }
 
+enum ReconnectPolicy {
+    static func shouldStart(
+        hasSavedKeyboard: Bool,
+        bluetoothIsPoweredOn: Bool,
+        isEnabled: Bool
+    ) -> Bool {
+        hasSavedKeyboard && bluetoothIsPoweredOn && isEnabled
+    }
+}
+
 enum UserDefaultsKeys {
     static let appSettings = "appSettings"
     static let selectedKeyboardData = "selectedKeyboardData"
     static let savedKeyboards = "savedKeyboards"
     static let hasCompletedSetup = "hasCompletedSetup"
+}
 
-    // Widget data keys
-    static let widgetKeyboardName = "widgetKeyboardName"
-    static let widgetLeftBattery = "widgetLeftBattery"
-    static let widgetRightBattery = "widgetRightBattery"
-    static let widgetLastUpdated = "widgetLastUpdated"
-    static let widgetIsConnected = "widgetIsConnected"
-
-    // Widget theme keys
-    static let widgetThemeId = "widgetThemeId"
-    static let widgetMenuLayout = "widgetMenuLayout"
+enum PreferencesMigration {
+    static func migrate(from legacy: UserDefaults, to defaults: UserDefaults) {
+        let marker = "didMigrateLegacyAppGroupDefaults"
+        guard !defaults.bool(forKey: marker) else { return }
+        let keys = [UserDefaultsKeys.appSettings, UserDefaultsKeys.selectedKeyboardData,
+                    UserDefaultsKeys.savedKeyboards, UserDefaultsKeys.hasCompletedSetup]
+        // An established domain may intentionally have forgotten its old keyboard.
+        if keys.allSatisfy({ defaults.object(forKey: $0) == nil }) {
+            for key in keys {
+                if let value = legacy.object(forKey: key) { defaults.set(value, forKey: key) }
+            }
+        }
+        defaults.set(true, forKey: marker)
+    }
 }
 
 enum AppInfo {
     static let appName = "BatMon"
     static let bundleIdentifier = "com.paolo.bat-mon"
-    static let appGroupIdentifier = "group.com.paolo.bat-mon"
     static var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
     }
     static var buildNumber: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
     }
+
+    static func displayVersion(version: String = version, build: String = buildNumber, isLocalTest: Bool = isLocalTest) -> String {
+        let label = "Version \(version) (\(build))"
+        return isLocalTest ? "\(label) • Local Test" : label
+    }
+
+    private static var isLocalTest: Bool {
+#if DEBUG
+        true
+#else
+        false
+#endif
+    }
+
     static let githubURL = "https://github.com/PapaniaP/bat-mon"
 }

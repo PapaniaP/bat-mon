@@ -32,6 +32,7 @@
 		MGR003 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC010 /* NotificationManager.swift */; };
 		UTL001 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC011 /* Constants.swift */; };
 		UTL002 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC014 /* LaunchAtLogin.swift */; };
+		UTL003 /* StatusExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC016 /* StatusExporter.swift */; };
 		VW001 /* MenuBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC012 /* MenuBarView.swift */; };
 		VW002 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC013 /* SettingsView.swift */; };
 		VW003 /* BatIconView.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC015 /* BatIconView.swift */; };
@@ -39,6 +40,13 @@
 		TSTBF002 /* XCTest.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = TSTFRAME001 /* XCTest.framework */; };
 		TSTBF003 /* ConfigurableTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = D251E076DD584111F71226A8 /* ConfigurableTheme.swift */; };
 		TSTBF004 /* ColorTheme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78C4E4F0E1A2543778546A5F /* ColorTheme.swift */; };
+		TSTBF005 /* Constants.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC011 /* Constants.swift */; };
+		TSTBF006 /* StatusExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TSTFILE002 /* StatusExporterTests.swift */; };
+		TSTBF007 /* ZMKKeyboard.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC003 /* ZMKKeyboard.swift */; };
+		TSTBF008 /* BatteryLevel.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC004 /* BatteryLevel.swift */; };
+		TSTBF009 /* ConnectionState.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC006 /* ConnectionState.swift */; };
+		TSTBF010 /* StatusExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = SRC016 /* StatusExporter.swift */; };
+		TSTBF011 /* BetaReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = TSTFILE003 /* BetaReadinessTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -73,7 +81,10 @@
 		SRC013 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		SRC014 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchAtLogin.swift; sourceTree = "<group>"; };
 		SRC015 /* BatIconView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatIconView.swift; sourceTree = "<group>"; };
+		SRC016 /* StatusExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusExporter.swift; sourceTree = "<group>"; };
 		TSTFILE001 /* ConfigurableThemeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigurableThemeTests.swift; sourceTree = "<group>"; };
+		TSTFILE002 /* StatusExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusExporterTests.swift; sourceTree = "<group>"; };
+		TSTFILE003 /* BetaReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BetaReadinessTests.swift; sourceTree = "<group>"; };
 		TSTFRAME001 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = System/Library/Frameworks/XCTest.framework; sourceTree = SDKROOT; };
 		TSTPROD001 /* BatMonTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = BatMonTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -226,6 +237,7 @@
 			children = (
 				SRC011 /* Constants.swift */,
 				SRC014 /* LaunchAtLogin.swift */,
+				SRC016 /* StatusExporter.swift */,
 			);
 			path = Utilities;
 			sourceTree = "<group>";
@@ -253,6 +265,8 @@
 			isa = PBXGroup;
 			children = (
 				TSTFILE001 /* ConfigurableThemeTests.swift */,
+				TSTFILE002 /* StatusExporterTests.swift */,
+				TSTFILE003 /* BetaReadinessTests.swift */,
 			);
 			path = BatMonTests;
 			sourceTree = "<group>";
@@ -375,6 +389,7 @@
 				MGR003 /* NotificationManager.swift in Sources */,
 				UTL001 /* Constants.swift in Sources */,
 				UTL002 /* LaunchAtLogin.swift in Sources */,
+				UTL003 /* StatusExporter.swift in Sources */,
 				VW001 /* MenuBarView.swift in Sources */,
 				VW002 /* SettingsView.swift in Sources */,
 				VW003 /* BatIconView.swift in Sources */,
@@ -400,6 +415,13 @@
 				TSTBF001 /* ConfigurableThemeTests.swift in Sources */,
 				TSTBF003 /* ConfigurableTheme.swift in Sources */,
 				TSTBF004 /* ColorTheme.swift in Sources */,
+				TSTBF005 /* Constants.swift in Sources */,
+				TSTBF006 /* StatusExporterTests.swift in Sources */,
+				TSTBF007 /* ZMKKeyboard.swift in Sources */,
+				TSTBF008 /* BatteryLevel.swift in Sources */,
+				TSTBF009 /* ConnectionState.swift in Sources */,
+				TSTBF010 /* StatusExporter.swift in Sources */,
+				TSTBF011 /* BetaReadinessTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -532,8 +554,9 @@
 				CODE_SIGN_ENTITLEMENTS = BatMon/Resources/BatMon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = BatMon/Resources/Info.plist;
@@ -543,8 +566,8 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
-				PRODUCT_BUNDLE_IDENTIFIER = "com.paolo.bat-mon";
+				MARKETING_VERSION = 1.1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.paolo.bat-mon.local";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -559,8 +582,9 @@
 				CODE_SIGN_ENTITLEMENTS = BatMon/Resources/BatMon.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = "";
+				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = BatMon/Resources/Info.plist;
@@ -570,7 +594,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.paolo.bat-mon";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

@@ -1223,7 +1223,7 @@ struct AboutView: View {
                 .font(.largeTitle)
                 .fontWeight(.bold)
 
-            Text("Version \(AppInfo.version)")
+            Text(AppInfo.displayVersion())
                 .font(.subheadline)
                 .foregroundColor(.secondary)
 
