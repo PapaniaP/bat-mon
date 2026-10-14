@@ -82,6 +82,41 @@ final class ConfigurableThemeTests: XCTestCase {
     }
 }
 
+final class ReconnectPolicyTests: XCTestCase {
+    func testAutoReconnectRequiresSavedKeyboard() {
+        XCTAssertFalse(
+            ReconnectPolicy.shouldStart(
+                hasSavedKeyboard: false,
+                bluetoothIsPoweredOn: true,
+                isEnabled: true
+            )
+        )
+        XCTAssertTrue(
+            ReconnectPolicy.shouldStart(
+                hasSavedKeyboard: true,
+                bluetoothIsPoweredOn: true,
+                isEnabled: true
+            )
+        )
+    }
+}
+
+final class AppInfoTests: XCTestCase {
+    func testDisplayVersionIdentifiesLocalTestBuild() {
+        XCTAssertEqual(
+            AppInfo.displayVersion(version: "1.1.0", build: "2", isLocalTest: true),
+            "Version 1.1.0 (2) • Local Test"
+        )
+    }
+
+    func testDisplayVersionKeepsReleaseLabelClean() {
+        XCTAssertEqual(
+            AppInfo.displayVersion(version: "1.1.0", build: "2", isLocalTest: false),
+            "Version 1.1.0 (2)"
+        )
+    }
+}
+
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)

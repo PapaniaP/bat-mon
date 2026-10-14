@@ -17,6 +17,11 @@ class PreferencesManager: ObservableObject {
     private let logger = Logger(subsystem: AppInfo.bundleIdentifier, category: "Preferences")
 
     private init() {
+#if !DEBUG
+        if let legacy = UserDefaults(suiteName: "group.com.paolo.bat-mon") {
+            PreferencesMigration.migrate(from: legacy, to: defaults)
+        }
+#endif
         // Load settings or use defaults
         if let data = defaults.data(forKey: UserDefaultsKeys.appSettings),
            var loaded = try? JSONDecoder().decode(AppSettings.self, from: data) {

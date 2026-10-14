@@ -19,6 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        NotificationCenter.default.post(name: .batMonWillTerminate, object: nil)
         NSWorkspace.shared.notificationCenter.removeObserver(self)
     }
 
@@ -38,4 +39,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 extension Notification.Name {
     static let systemDidWake = Notification.Name("systemDidWake")
+    static let batMonWillTerminate = Notification.Name("batMonWillTerminate")
 }
